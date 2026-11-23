@@ -1,0 +1,269 @@
+{
+  "schedule": {
+    "gameWeek": [
+      {
+        "games": [
+          {
+            "id": 100,
+            "gameType": 2,
+            "startTimeUTC": "2026-11-23T00:00:00Z",
+            "homeTeam": {
+              "abbrev": "CAR"
+            },
+            "awayTeam": {
+              "abbrev": "NYR"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "standings": {
+    "standings": [
+      {
+        "teamAbbrev": {
+          "default": "CAR"
+        },
+        "wins": 12,
+        "losses": 5,
+        "otLosses": 2,
+        "conferenceSequence": 3
+      },
+      {
+        "teamAbbrev": {
+          "default": "NYR"
+        },
+        "wins": 8,
+        "losses": 9,
+        "otLosses": 1,
+        "conferenceSequence": 9
+      }
+    ]
+  },
+  "club_schedules": {
+    "CAR": {
+      "games": [
+        {
+          "id": 1,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-21T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 2,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-20T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 3,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-19T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 4,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-18T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 5,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-17T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 6,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-16T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        }
+      ]
+    },
+    "NYR": {
+      "games": [
+        {
+          "id": 1,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-21T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 2,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-20T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 3,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-19T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 4,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-18T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 5,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-17T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        },
+        {
+          "id": 6,
+          "gameState": "OFF",
+          "gameType": 2,
+          "startTimeUTC": "2026-11-16T00:00:00+00:00",
+          "homeTeam": {
+            "abbrev": "CAR",
+            "score": 4
+          },
+          "awayTeam": {
+            "abbrev": "NYR",
+            "score": 2
+          },
+          "gameOutcome": {
+            "lastPeriodType": "REG"
+          },
+          "gameDate": "2026-11-20"
+        }
+      ]
+    }
+  }
+}

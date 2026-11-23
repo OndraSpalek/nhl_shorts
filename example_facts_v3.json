@@ -1,0 +1,14 @@
+{
+  "games": {
+    "100": []
+  },
+  "sources": {
+    "shots": null,
+    "special_teams": null
+  },
+  "warnings": [
+    "Chybí strely_tymy_data_2026-11-22.csv; střely a vhazování přeskočeny.",
+    "Chybí presilovky_data_2026-11-22.csv; přesilovky a oslabení přeskočeny.",
+    "CSV jsou sezonní snapshoty. Pro historické video použij archivní CSV pořízená před zápasy; nepoužívej později přepočtené reporty."
+  ]
+}

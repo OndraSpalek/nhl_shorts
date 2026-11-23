@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""V6.5: cinematic NHL video, music only. No voice code or YouTube publishing."""
+import argparse,json,math,subprocess,tempfile,wave,array,shutil
+from pathlib import Path
+from datetime import datetime
+from render import render,ROOT
+
+CODES='ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LAK MIN MTL NJD NSH NYI NYR OTT PHI PIT SEA SJS STL TBL TOR UTA VAN VGK WPG WSH'.split()
+LOGO_URL='https://assets.nhle.com/logos/nhl/svg/{code}_light.svg'
+
+def logos(codes, strict=True):
+    import requests
+    from io import BytesIO
+    import cairosvg
+    missing=[]
+    for code in sorted(set(codes)):
+        if code not in CODES: raise ValueError('Neznámý klub: '+code)
+        target=ROOT/'assets/logos'/f'{code}.png'
+        if target.exists(): continue
+        try:
+            r=requests.get(LOGO_URL.format(code=code),timeout=15,headers={'User-Agent':'Be6player/6.5'})
+            r.raise_for_status()
+            if b'<svg' not in r.content[:500]:raise ValueError('Odpověď není SVG')
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(cairosvg.svg2png(bytestring=r.content,output_width=420,output_height=420))
+        except Exception as e: missing.append(f'{code}: {e}')
+    if missing and strict: raise RuntimeError('Chybí loga; nevytvářím zavádějící výstup: '+'; '.join(missing))
+    return missing
+
+def form(t,venue=None):
+    x=t.get('form_'+venue if venue else 'form_all') or {}
+    return f"{x.get('V',0)}V/{x.get('P',0)}P/{x.get('PP',0)}PP" if x.get('sample_size') else 'N/D'
+
+def pct(t, key):
+    # Optional data from enriched pipeline: no fabricated percentages.
+    for source in (t,t.get('advanced') or {},t.get('stats') or {}):
+        v=source.get(key)
+        if isinstance(v,(int,float)):return f'{v:.1f} %'.replace('.',',')
+        if isinstance(v,str) and v.strip():return v
+    return 'N/D'
+
+def mapped(g):
+    h,a=g['home'],g['away']
+    def record(t):return f"{t.get('wins','?')}-{t.get('losses','?')}-{t.get('ot_losses','?')}"
+    def streak(t):
+        s=t.get('streak') or {}
+        return f"{s.get('length')}× {'V' if s.get('type')=='vyhry' else 'bez V'}" if s.get('length') else 'N/D'
+    def place(t):return str(t.get('conference_rank') or 'N/D')
+    rows=[('BILANCE',record),('FORMA 5',lambda t:form(t)),('DOMA/VENKU',lambda t:form(t,'home' if t is h else 'away')),('SÉRIE',streak),('POŘADÍ',place),('PŘESILOVKY',lambda t:pct(t,'power_play_pct')),('OSLABENÍ',lambda t:pct(t,'penalty_kill_pct'))]
+    fact=(g.get('featured_fact') or {}).get('text') or 'Předzápasové srovnání týmů NHL.'
+    return {'home':h['abbrev'],'away':a['abbrev'],'home_name':h['abbrev'],'away_name':a['abbrev'], 'title':'ZÁPAS DNE' if str(g.get('id'))==str(g.get('_game_of_day_id')) else 'PŘEDZÁPASOVÉ SROVNÁNÍ', 'rows':[{'label':label,'home':fn(h),'away':fn(a)} for label,fn in rows], 'caption':fact[:135], 'source_label': 'DEMO • ILUSTRAČNÍ DATA' if g.get('_demo') else 'NHL API • PŘEDZÁPASOVÁ DATA'}
+
+def instrumental(path,seconds,rate=16000):
+    # Original procedural music, not a sample of a commercial recording.
+    notes=[110,130.81,146.83,164.81,196,174.61,146.83,130.81]
+    with wave.open(str(path),'wb') as f:
+        f.setnchannels(1);f.setsampwidth(2);f.setframerate(rate)
+        for start in range(0,int(seconds*rate),4096):
+            buf=array.array('h')
+            for i in range(start,min(int(seconds*rate),start+4096)):
+                t=i/rate; beat=t*2.4; note=notes[int(beat//2)%len(notes)]
+                fade=min(1,t/0.8,(seconds-t)/1.2)
+                bass=math.sin(2*math.pi*note*t)*0.43
+                harmony=math.sin(2*math.pi*note*1.5*t)*0.18
+                kick=math.sin(2*math.pi*54*t)*math.exp(-12*(beat%1))*0.30
+                hat=(math.sin(2*math.pi*4200*t)+math.sin(2*math.pi*6900*t))*math.exp(-24*((beat*2)%1))*0.06
+                buf.append(int(max(-1,min(1,(bass+harmony+kick+hat)*fade))*10500))
+            f.writeframes(buf.tobytes())
+
+def build(data,out,strict_logos=True,seconds_per_card=4):
+    if not shutil.which('ffmpeg'):raise RuntimeError('Chybí ffmpeg')
+    games=data.get('games')
+    if not isinstance(games,list):raise ValueError('Chybí games')
+    if not games:raise ValueError('Žádné zápasy: nevytvářím fiktivní video')
+    codes=[g[side]['abbrev'] for g in games for side in ('home','away')]
+    missing=logos(codes,strict_logos)
+    out=Path(out);out.mkdir(parents=True,exist_ok=True)
+    cards=out/'cards';cards.mkdir(exist_ok=True)
+    slides=[]
+    for i,g in enumerate(games,1):
+        g=dict(g,_game_of_day_id=data.get('game_of_day_id'),_demo=data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE')
+        p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)
+    shutil.copy2(slides[0],out/'nahled.png')
+    duration=seconds_per_card*len(slides)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp=Path(tmp);listing=tmp/'slides.ffconcat';parts=['ffconcat version 1.0']
+        for p in slides:parts.extend([f"file '{p.resolve()}'",f'duration {seconds_per_card}'])
+        parts.append(f"file '{slides[-1].resolve()}'")
+        listing.write_text('\n'.join(parts)+'\n',encoding='utf-8')
+        instrumental(tmp/'original_music.wav',duration)
+        cmd=['ffmpeg','-y','-hide_banner','-loglevel','error','-safe','0','-f','concat','-i',str(listing),'-i',str(tmp/'original_music.wav'),'-map','0:v:0','-map','1:a:0','-vf','fps=12,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','25','-c:a','aac','-b:a','128k','-t',str(duration),'-movflags','+faststart',str(out/'be6player_shorts.mp4')]
+        subprocess.run(cmd,check=True)
+    (out/'titulek.txt').write_text('NHL dnes | Be6player – zápasy a statistiky\n',encoding='utf-8')
+    (out/'popis.txt').write_text(f"Přehled NHL pro {data.get('local_date','zvolené datum')}. Statistiky týmů a zápas dne. #NHL #Hokej #Be6player #NHLShorts\n",encoding='utf-8')
+    (out/'manifest.json').write_text(json.dumps({'games':len(games),'seconds':duration,'audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
+    return out/'be6player_shorts.mp4'
+
+if __name__=='__main__':
+    ap=argparse.ArgumentParser();ap.add_argument('--input',required=True);ap.add_argument('--outdir',required=True);ap.add_argument('--allow-missing-logos',action='store_true',help='Pouze lokální demo, viditelně ukazuje BEZ LOGA');ap.add_argument('--seconds-per-card',type=float,default=4);a=ap.parse_args()
+    print(build(json.loads(Path(a.input).read_text(encoding='utf-8')),a.outdir,not a.allow_missing_logos,a.seconds_per_card))
