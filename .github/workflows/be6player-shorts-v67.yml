@@ -1,19 +1,21 @@
-
 name: Be6player Shorts V6.7 - NHL live smoke and music
 
 on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'Datum v ČR (YYYY-MM-DD); prázdné = aktuální datum'
+        description: 'Datum v CR (YYYY-MM-DD); prazdne = aktualni datum'
         required: false
         default: ''
+        type: string
       mode:
-        description: 'fixture = bezpečný test; live = skutečné NHL API'
-        type: choice
+        description: 'fixture = testovaci data; live = skutecne NHL API'
         required: true
+        type: choice
         default: fixture
-        options: [fixture, live]
+        options:
+          - fixture
+          - live
 
 permissions:
   contents: read
@@ -22,30 +24,52 @@ jobs:
   shorts:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Python 3.12
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Závislosti
+      - name: Kontrola souboru
+        shell: bash
         run: |
+          set -euo pipefail
+          pwd
+          ls -la
+          for file in v66_pipeline.py v67_verify.py; do
+            if [ ! -f "$file" ]; then
+              echo "CHYBA: Chybi $file v koreni repozitare."
+              exit 1
+            fi
+          done
+          if [ "${{ inputs.mode }}" = "fixture" ] && [ ! -f demo/offline_api_fixture.json ]; then
+            echo 'CHYBA: Chybi demo/offline_api_fixture.json.'
+            exit 1
+          fi
+
+      - name: Zavislosti
+        shell: bash
+        run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core libcairo2
           python -m pip install pillow requests cairosvg tzdata
 
-      - name: Testy
-  run: |
-    if [ -d tests ]; then
-      python -m unittest discover -s tests -v
-    else
-      echo "Slozka tests nebyla nalezena."
-      echo "Preskakuji jednotkove testy."
-    fi
+      - name: Jednotkove testy (pokud jsou nahrane)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d tests ]; then
+            python -m unittest discover -s tests -v
+          else
+            echo 'UPOZORNENI: Slozka tests chybi; jednotkove testy byly preskoceny.'
+          fi
 
-      - name: Vytvořit video a audit
+      - name: Vytvorit video a audit
+        shell: bash
         env:
           INPUT_DATE: ${{ inputs.date }}
           INPUT_MODE: ${{ inputs.mode }}
@@ -60,14 +84,15 @@ jobs:
             python v67_verify.py --outdir shorts_preview --require-live
           fi
 
-      - name: Zveřejnit kontrolu v přehledu běhu
+      - name: Kontrolni protokol
         if: always()
+        shell: bash
         run: |
           if [ -f shorts_preview/verification.md ]; then
             cat shorts_preview/verification.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Uložit výstupy pro kontrolu (nikoliv YouTube)
+      - name: Ulozit vysledky (bez YouTube uploadu)
         if: always()
         uses: actions/upload-artifact@v4
         with:
