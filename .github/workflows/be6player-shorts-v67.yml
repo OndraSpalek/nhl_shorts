@@ -1,4 +1,6 @@
+
 name: Be6player Shorts V6.7 - NHL live smoke and music
+
 on:
   workflow_dispatch:
     inputs:
@@ -12,27 +14,31 @@ on:
         required: true
         default: fixture
         options: [fixture, live]
+
 permissions:
   contents: read
+
 jobs:
   shorts:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    defaults:
-      run:
-        working-directory: be6player_v6_7
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Závislosti
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core libcairo2
           python -m pip install pillow requests cairosvg tzdata
+
       - name: Testy
         run: python -m unittest discover -s tests -v
+
       - name: Vytvořit video a audit
         env:
           INPUT_DATE: ${{ inputs.date }}
@@ -47,16 +53,19 @@ jobs:
             python v66_pipeline.py --date "$DAY" --outdir shorts_preview --render
             python v67_verify.py --outdir shorts_preview --require-live
           fi
+
       - name: Zveřejnit kontrolu v přehledu běhu
         if: always()
         run: |
-          if [ -f shorts_preview/verification.md ]; then cat shorts_preview/verification.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f shorts_preview/verification.md ]; then
+            cat shorts_preview/verification.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Uložit výstupy pro kontrolu (nikoliv YouTube)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: be6player-shorts-v67-${{ github.run_id }}
-          path: be6player_v6_7/shorts_preview/
+          path: shorts_preview/
           if-no-files-found: warn
           retention-days: 14
-
