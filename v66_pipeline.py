@@ -52,18 +52,26 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     data['generated_utc']=datetime.now(timezone.utc).isoformat()
     data['data_endpoints']=['/v1/schedule/{date}','/v1/standings/{date}','/v1/club-schedule-season/{team}/now'] if fixture is None else []
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
-    facts=merge_facts(data,Path(csv_dir) if csv_dir else Path('.'),bool(csv_dir))
+    # CSV použij jen na explicitní požadavek nebo při přítomnosti obou souborů pro daný den.
+    csv_path = Path(csv_dir) if csv_dir else Path('.')
+    csv_ready = all((csv_path / f'{prefix}_{day}.csv').is_file()
+                    for prefix in ('strely_tymy_data', 'presilovky_data'))
+    facts=merge_facts(data,csv_path,bool(csv_dir) or csv_ready)
+    if not csv_ready:
+        facts['warnings'].append('Chybí úplné ověřené CSV snapshoty pro tento den. Přesilovky/oslabení nejsou v základních datech NHL API.')
+    if not csv_dir and csv_ready:
+        facts['warnings'].append('CSV snapshoty pro daný den byly automaticky nalezeny v kořeni repozitáře.')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
     audit={'version':'6.6','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
-           'note':'V6.6: pokročilé CSV jen jsou-li dodány ověřené snapshoty. API nebylo v tomto prostředí ověřeno.'}
+           'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}
     for g in ranked['games']:
         audit['metrics'][str(g['id'])]={'teams':[g['away']['abbrev'],g['home']['abbrev']],
             'last5_samples':{side:{k:g[side][k]['sample_size'] for k in ('form_all','form_home','form_away')} for side in ('home','away')},
-            'verified_facts':len(facts['games'].get(str(g['id']),[])), 'interest_score':g['interest_score']}
+            'verified_facts':len(facts['games'].get(str(g['id']),[])), 'generated_candidates':len(g.get('all_candidates',[])), 'featured_fact':g['featured_fact']['text'], 'interest_score':g['interest_score']}
     (outdir/'audit.json').write_text(json.dumps(audit,ensure_ascii=False,indent=2),encoding='utf-8')
     if render:
         if not data['games']:

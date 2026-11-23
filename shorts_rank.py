@@ -43,6 +43,13 @@ def generated_candidates(game):
     hp,ap=form_points(h.get('form_all')),form_points(a.get('form_all'))
     if hp is not None and ap is not None and abs(hp-ap)>=6:
         out.append(candidate('overall_form',f"Forma posledních 5: {h['abbrev']} {form_label(h['form_all'])}, {a['abbrev']} {form_label(a['form_all'])}",75+10,{'difference_pp':abs(hp-ap)*10}))
+    # Záložní zajímavost z doložených výsledků, pokud neexistuje výraznější rozdíl.
+    if not out:
+        hf, af = h.get('form_all') or {}, a.get('form_all') or {}
+        if hf.get('sample_size') == 5 and af.get('sample_size') == 5:
+            out.append(candidate('form',
+                f"Posledních 5 zápasů: {h['abbrev']} {form_label(hf)}, {a['abbrev']} {form_label(af)}",
+                25, {'sample_size': 5, 'source': 'club-schedule-season'}))
     return out
 
 def verified_external(game, facts):

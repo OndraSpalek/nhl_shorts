@@ -41,7 +41,7 @@ def pct(t, key):
 
 def mapped(g):
     h,a=g['home'],g['away']
-    def record(t):return f"{t.get('wins','?')}-{t.get('losses','?')}-{t.get('ot_losses','?')}"
+    def record(t):return '-'.join(str(t[k]) if t.get(k) is not None else '?' for k in ('wins','losses','ot_losses'))
     def streak(t):
         s=t.get('streak') or {}
         return f"{s.get('length')}× {'V' if s.get('type')=='vyhry' else 'bez V'}" if s.get('length') else 'N/D'
