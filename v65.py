@@ -46,7 +46,7 @@ def mapped(g):
         s=t.get('streak') or {}
         return f"{s.get('length')}× {'V' if s.get('type')=='vyhry' else 'bez V'}" if s.get('length') else 'N/D'
     def place(t):return str(t.get('conference_rank') or 'N/D')
-    rows=[('BILANCE',record),('FORMA 5',lambda t:form(t)),('DOMA/VENKU',lambda t:form(t,'home' if t is h else 'away')),('SÉRIE',streak),('POŘADÍ',place),('PŘESILOVKY',lambda t:pct(t,'power_play_pct')),('OSLABENÍ',lambda t:pct(t,'penalty_kill_pct'))]
+    rows=[('BILANCE',record),('FORMA 5',lambda t:form(t)),('DOMA/VENKU',lambda t:form(t,'home' if t is h else 'away')),('VHAZOVÁNÍ',lambda t:pct(t,'faceoff_pct')),('STŘELY / ZÁPAS',lambda t: str(t.get('advanced',{}).get('shots_per_game','N/D')).replace('.',',')),('PŘESILOVKY',lambda t:pct(t,'power_play_pct')),('OSLABENÍ',lambda t:pct(t,'penalty_kill_pct'))]
     fact=(g.get('featured_fact') or {}).get('text') or 'Předzápasové srovnání týmů NHL.'
     return {'home':h['abbrev'],'away':a['abbrev'],'home_name':h['abbrev'],'away_name':a['abbrev'], 'title':'ZÁPAS DNE' if str(g.get('id'))==str(g.get('_game_of_day_id')) else 'PŘEDZÁPASOVÉ SROVNÁNÍ', 'rows':[{'label':label,'home':fn(h),'away':fn(a)} for label,fn in rows], 'caption':fact[:135], 'source_label': 'DEMO • ILUSTRAČNÍ DATA' if g.get('_demo') else 'NHL API • PŘEDZÁPASOVÁ DATA'}
 
@@ -81,6 +81,7 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
         g=dict(g,_game_of_day_id=data.get('game_of_day_id'),_demo=data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE')
         p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)
     shutil.copy2(slides[0],out/'nahled.png')
+    seconds_per_card=min(seconds_per_card, 175/len(slides))
     duration=seconds_per_card*len(slides)
     with tempfile.TemporaryDirectory() as tmp:
         tmp=Path(tmp);listing=tmp/'slides.ffconcat';parts=['ffconcat version 1.0']

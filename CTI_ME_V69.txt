@@ -1,0 +1,9 @@
+BE6PLAYER SHORTS V6.9 – instalace
+1. Zálohujte současný repozitář (Code > Download ZIP), případně vytvořte větev v681-backup.
+2. Rozbalte tento ZIP. Nahrajte obsah jeho kořene do kořene nhl_shorts (nikoli celý ZIP ani nadřazenou složku). Přepište stejnojmenné soubory Shorts. Složky assets, examples, demo a tests zachovejte. E-mailové soubory neměňte.
+3. Skrytou složku .github nahrajte zvlášť: v repozitáři otevřete .github/workflows, Add file > Upload files a nahrajte be6player_shorts_v69.yml z .github/workflows tohoto balíčku. Starší workflow Shorts můžete vypnout přes Actions > vybrat workflow > ... > Disable workflow. E-mailové workflow nevypínejte.
+4. Commit changes. Actions > Be6player Shorts V6.9 - NHL video > Run workflow > main > fixture (offline test, datum se ignoruje). Po úspěchu spusťte nový běh live, datum ponechte prázdné pro dnešní český den.
+5. Stáhněte nový artifact be6player-v69-... přímo z daného běhu. Video má datum, český čas a ID běhu. audit.json obsahuje SHA-256, čas a identifikátor. verification.json ověřuje média před přejmenováním.
+6. Při chybě pošlete log; při úspěchu pošlete ZIP. Živé NHL reporty nejsou v tomto prostředí ověřené. Pokud chybí data, zůstane N/D a varování v facts.json. Žádné odhady.
+
+Rozsah: sezónní PP, PK, střely a vhazování z NHL REST reportů; fakta při dostatečném vzorku a rozdílu. Historické zápasy nedostávají aktuální sezónní snapshot. Časové okno zůstává 10:00–10:00 českého času. Jedna karta na zápas, 8 sekund (nejvýše 175 sekund celkem); sedm řádků, série a pořadí zůstávají v datech, na kartě je nahrazují střely a vhazování. H2H, třetiny, první gól a hráčské zajímavosti zatím nejsou automatizované. Bez hlasu, bez YouTube uploadu, bez plánovaného spouštění. Starší importní moduly jsou zachovány, ale V6.9 používá živé reporty místo CSV.

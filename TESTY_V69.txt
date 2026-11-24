@@ -1,0 +1,43 @@
+test_no_fabrication (test_advanced.AdvancedTests.test_no_fabrication) ... ok
+test_period_and_first_goal (test_advanced.AdvancedTests.test_period_and_first_goal) ... ok
+test_small_sample (test_advanced.AdvancedTests.test_small_sample) ... ok
+test_exclude_future_and_playoffs (test_h2h_players.ImportTests.test_exclude_future_and_playoffs) ... ok
+test_h2h_four_wins (test_h2h_players.ImportTests.test_h2h_four_wins) ... ok
+test_h2h_no_four_of_five (test_h2h_players.ImportTests.test_h2h_no_four_of_five) ... ok
+test_merge (test_h2h_players.ImportTests.test_merge) ... ok
+test_verified_players_csv (test_h2h_players.ImportTests.test_verified_players_csv) ... ok
+test_import_and_rank (test_import_stats.ImportTests.test_import_and_rank) ... ok
+test_missing_files_do_not_invent_facts (test_import_stats.ImportTests.test_missing_files_do_not_invent_facts) ... ok
+test_small_sample_rejected (test_import_stats.ImportTests.test_small_sample_rejected) ... ok
+test_all_32_codes_have_names (test_layers.TestLayers.test_all_32_codes_have_names) ... ok
+test_car_nyr (test_layers.TestLayers.test_car_nyr) ... ok
+test_missing_logo_fails_closed (test_layers.TestLayers.test_missing_logo_fails_closed) ... ok
+test_missing_stats_fails (test_layers.TestLayers.test_missing_stats_fails) ... ok
+test_unknown_team_fails (test_layers.TestLayers.test_unknown_team_fails) ... ok
+test_enrich (test_live_stats.LiveStats.test_enrich) ... ok
+test_math (test_live_stats.LiveStats.test_math) ... ok
+test_missing (test_live_stats.LiveStats.test_missing) ... ok
+test_missing_rows_rejected (test_render.TestRender.test_missing_rows_rejected) ... ok
+test_numbers_change (test_render.TestRender.test_numbers_change) ... ok
+test_size (test_render.TestRender.test_size) ... /tmp/v69/test_render.py:10: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp409pxgs_/a.png'>
+  p=render(self.data,Path(tmp)/'a.png');self.assertEqual(Image.open(p).size,(1080,1920))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_wrong_team_rejected (test_render.TestRender.test_wrong_team_rejected) ... ok
+test_form_and_streak (test_shorts.ShortsTests.test_form_and_streak) ... ok
+test_ranking_and_missing (test_shorts.ShortsTests.test_ranking_and_missing) ... ok
+test_time_window_and_dedup (test_shorts.ShortsTests.test_time_window_and_dedup) ... ok
+test_audit_and_explicit_fixture (tests.test_v66.TestV66.test_audit_and_explicit_fixture) ... ok
+test_duplicate_game_rejected (tests.test_v66.TestV66.test_duplicate_game_rejected) ... ok
+test_fixture_game_and_timezone (tests.test_v66.TestV66.test_fixture_game_and_timezone) ... ok
+test_no_games_is_not_fabricated (tests.test_v66.TestV66.test_no_games_is_not_fabricated) ... ok
+test_no_invented_form (tests.test_v66.TestV66.test_no_invented_form) ... ok
+test_empty_day_passes_without_video (tests.test_v67.TestV67.test_empty_day_passes_without_video) ... ok
+test_fixture_cannot_pass_as_live (tests.test_v67.TestV67.test_fixture_cannot_pass_as_live) ... ok
+test_fixture_no_render_is_rejected (tests.test_v67.TestV67.test_fixture_no_render_is_rejected) ... ok
+test_fixture_render_and_media (tests.test_v67.TestV67.test_fixture_render_and_media) ... ok
+
+----------------------------------------------------------------------
+Ran 35 tests in 4.009s
+
+OK

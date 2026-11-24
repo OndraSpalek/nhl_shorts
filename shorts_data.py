@@ -144,10 +144,13 @@ def build(day, fetch=get_json, fixture=None):
     for g in sorted(games_by_id.values(), key=lambda g: g['startTimeUTC']):
         at = utc_datetime(g['startTimeUTC'])
         home, away = g['homeTeam']['abbrev'], g['awayTeam']['abbrev']
+        cutoff=min(at,datetime.now(timezone.utc))
+        scoped={k:{'games':[x for x in v.get('games',[]) if x.get('gameType',g['gameType'])==g['gameType']]} for k,v in schedules.items()}
+        snapshot=standings if fixture or at>datetime.now(timezone.utc) else {}
         output.append({'id': g['id'], 'start_utc': at.isoformat(),
             'start_prague': at.astimezone(PRAGUE).isoformat(), 'game_type': g['gameType'],
-            'home': team_summary(home, standings, schedules, at),
-            'away': team_summary(away, standings, schedules, at)})
+            'home': team_summary(home, snapshot, scoped, cutoff),
+            'away': team_summary(away, snapshot, scoped, cutoff)})
     return {'brand': 'Be6player', 'local_date': day, 'timezone': 'Europe/Prague',
         'window_start': start.isoformat(), 'window_end': end.isoformat(),
         'games': output, 'game_count': len(output),

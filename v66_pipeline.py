@@ -8,6 +8,7 @@ from shorts_rank import rank
 from shorts_import_stats import generate as csv_basic
 from shorts_import_advanced import generate as csv_advanced
 from v65 import build as make_video
+from shorts_live_stats import enrich
 
 
 def merge_facts(data, csv_dir, enable_csv):
@@ -43,7 +44,7 @@ def validate(data):
     return True
 
 
-def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_demo_logos=False, seconds=4):
+def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_demo_logos=False, seconds=8):
     outdir=Path(outdir);outdir.mkdir(parents=True,exist_ok=True)
     fixture=json.loads(Path(fixture_path).read_text(encoding='utf-8')) if fixture_path else None
     data=build(day,fixture=fixture)
@@ -51,20 +52,12 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     data['data_mode']='OFFLINE_FIXTURE_NOT_LIVE' if fixture is not None else 'NHL_API'
     data['generated_utc']=datetime.now(timezone.utc).isoformat()
     data['data_endpoints']=['/v1/schedule/{date}','/v1/standings/{date}','/v1/club-schedule-season/{team}/now'] if fixture is None else []
+    facts=enrich(data) if fixture is None else {'games':{},'warnings':['Offline demo: bez živých statistik'],'sources':{}}
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
-    # CSV použij jen na explicitní požadavek nebo při přítomnosti obou souborů pro daný den.
-    csv_path = Path(csv_dir) if csv_dir else Path('.')
-    csv_ready = all((csv_path / f'{prefix}_{day}.csv').is_file()
-                    for prefix in ('strely_tymy_data', 'presilovky_data'))
-    facts=merge_facts(data,csv_path,bool(csv_dir) or csv_ready)
-    if not csv_ready:
-        facts['warnings'].append('Chybí úplné ověřené CSV snapshoty pro tento den. Přesilovky/oslabení nejsou v základních datech NHL API.')
-    if not csv_dir and csv_ready:
-        facts['warnings'].append('CSV snapshoty pro daný den byly automaticky nalezeny v kořeni repozitáře.')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'6.6','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'6.9','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}
@@ -83,7 +76,7 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--date',required=True);p.add_argument('--outdir',required=True)
     p.add_argument('--fixture');p.add_argument('--csv-dir');p.add_argument('--render',action='store_true')
-    p.add_argument('--allow-demo-logos',action='store_true');p.add_argument('--seconds',type=float,default=4)
+    p.add_argument('--allow-demo-logos',action='store_true');p.add_argument('--seconds',type=float,default=8)
     a=p.parse_args()
     if a.allow_demo_logos and not a.fixture: p.error('--allow-demo-logos je povoleno pouze s --fixture')
     print(json.dumps(execute(a.date,a.outdir,a.fixture,a.csv_dir,a.render,a.allow_demo_logos,a.seconds),ensure_ascii=False,indent=2))
