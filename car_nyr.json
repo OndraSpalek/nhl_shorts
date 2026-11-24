@@ -1,0 +1,25 @@
+{
+  "home": "CAR",
+  "away": "NYR",
+  "rows": [
+    {
+      "home": "26,3 %",
+      "away": "19,7 %",
+      "home_detail": "21 z 80",
+      "away_detail": "12 z 61",
+      "label": "PŘESILOVKY"
+    },
+    {
+      "home": "11",
+      "away": "7",
+      "label": "GÓLY V OSLABENÍ"
+    },
+    {
+      "home": "+20",
+      "away": "+9",
+      "label": "ČISTÝ ZISK"
+    }
+  ],
+  "caption": "Carolina má vyšší úspěšnost přesilovek než Rangers.",
+  "title": "PŘESILOVKY A OSLABENÍ"
+}
