@@ -1,21 +1,24 @@
-name: Be6player Shorts V6.7 - NHL live smoke and music
+
+name: Be6player Shorts V6.8 - NHL video
+
+run-name: Be6player V6.8 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 
 on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'Datum v CR (YYYY-MM-DD); prazdne = aktualni datum'
+        description: 'Datum v CR (YYYY-MM-DD); prazdne = dnes'
         required: false
         default: ''
         type: string
       mode:
-        description: 'fixture = testovaci data; live = skutecne NHL API'
+        description: 'live = skutecne NHL API; fixture = test'
         required: true
         type: choice
-        default: fixture
+        default: live
         options:
-          - fixture
           - live
+          - fixture
 
 permissions:
   contents: read
@@ -24,65 +27,209 @@ jobs:
   shorts:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
-      - name: Kontrola souboru
-        shell: bash
-        run: |
-          set -euo pipefail
-          pwd
-          ls -la
-          for file in v66_pipeline.py v67_verify.py; do
-            if [ ! -f "$file" ]; then
-              echo "CHYBA: Chybi $file v koreni repozitare."
-              exit 1
-            fi
-          done
-          if [ "${{ inputs.mode }}" = "fixture" ] && [ ! -f demo/offline_api_fixture.json ]; then
-            echo 'CHYBA: Chybi demo/offline_api_fixture.json.'
-            exit 1
-          fi
-
-      - name: Zavislosti
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-dejavu-core libcairo2
-          python -m pip install pillow requests cairosvg tzdata
-
-      - name: Jednotkove testy (pokud jsou nahrane)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -d tests ]; then
-            python -m unittest discover -s tests -v
-          else
-            echo 'UPOZORNENI: Slozka tests chybi; jednotkove testy byly preskoceny.'
-          fi
-
-      - name: Vytvorit video a audit
+      - name: Nastavit datum a rezim
         shell: bash
         env:
           INPUT_DATE: ${{ inputs.date }}
           INPUT_MODE: ${{ inputs.mode }}
         run: |
           set -euo pipefail
+
           if [ "$INPUT_MODE" = "fixture" ]; then
-            python v66_pipeline.py --date 2026-11-22 --fixture demo/offline_api_fixture.json --outdir shorts_preview --render --allow-demo-logos --seconds 2
-            python v67_verify.py --outdir shorts_preview
+            DAY="2026-11-22"
           else
             DAY="${INPUT_DATE:-$(TZ=Europe/Prague date +%F)}"
-            python v66_pipeline.py --date "$DAY" --outdir shorts_preview --render
-            python v67_verify.py --outdir shorts_preview --require-live
           fi
+
+          python -c 'import sys, datetime; d=datetime.date.fromisoformat(sys.argv[1]); assert d.isoformat()==sys.argv[1]' "$DAY"
+
+          echo "VIDEO_DATE=$DAY" >> "$GITHUB_ENV"
+          echo "VIDEO_MODE=$INPUT_MODE" >> "$GITHUB_ENV"
+
+          echo "================================"
+          echo "Datum videa: $DAY"
+          echo "Rezim: $INPUT_MODE"
+          echo "Aktualni cas v CR:"
+          TZ=Europe/Prague date
+          echo "================================"
+
+          echo "## Be6player V6.8" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Datum videa: $DAY" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Rezim: $INPUT_MODE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Kontrola potrebnych souboru
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for file in \
+            v66_pipeline.py \
+            v67_verify.py \
+            v65.py \
+            shorts_data.py \
+            shorts_rank.py \
+            render.py \
+            assets/arena_master.png
+          do
+            if [ ! -f "$file" ]; then
+              echo "CHYBA: Chybi $file"
+              exit 1
+            fi
+          done
+
+          if [ "$VIDEO_MODE" = "fixture" ]; then
+            test -f demo/offline_api_fixture.json || {
+              echo "CHYBA: Chybi testovaci fixture."
+              exit 1
+            }
+          fi
+
+      - name: Instalace zavislosti
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+
+          sudo apt-get install -y fonts-dejavu-core libcairo2
+
+          ffmpeg -version | sed -n '1p'
+
+          python -m pip install \
+            --disable-pip-version-check \
+            pillow requests cairosvg tzdata
+
+      - name: Jednotkove testy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -d tests ]; then
+            python -m unittest discover -s tests -v
+          else
+            python -m unittest discover -s . -p 'test_*.py' -v
+          fi
+
+      - name: Odstranit stare vystupy
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf shorts_preview
+          mkdir -p shorts_preview
+
+      - name: Vytvorit aktualni video a audit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Generuji video pro $VIDEO_DATE"
+
+          if [ "$VIDEO_MODE" = "fixture" ]; then
+
+            python v66_pipeline.py \
+              --date "$VIDEO_DATE" \
+              --fixture demo/offline_api_fixture.json \
+              --outdir shorts_preview \
+              --render \
+              --allow-demo-logos \
+              --seconds 2
+
+            python v67_verify.py \
+              --outdir shorts_preview
+
+          else
+
+            python v66_pipeline.py \
+              --date "$VIDEO_DATE" \
+              --outdir shorts_preview \
+              --render
+
+            python v67_verify.py \
+              --outdir shorts_preview \
+              --require-live
+
+          fi
+
+      - name: Overit datum a aktualnost vystupu
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          audit = json.loads(
+              Path("shorts_preview/audit.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          expected = os.environ["VIDEO_DATE"]
+          actual = audit.get("date")
+          mode = os.environ["VIDEO_MODE"]
+          count = audit.get("game_count", 0)
+
+          print("Pozadovane datum:", expected)
+          print("Datum v auditu:", actual)
+          print("Pocet zapasu:", count)
+
+          if actual != expected:
+              raise SystemExit(
+                  "CHYBA: Datum auditu neodpovida zadani."
+              )
+
+          if mode == "live" and audit.get("mode") != "NHL_API":
+              raise SystemExit(
+                  "CHYBA: Video nepouziva zivy rezim."
+              )
+
+          video = Path(
+              "shorts_preview/video/be6player_shorts.mp4"
+          )
+
+          if count > 0:
+              if not video.is_file() or video.stat().st_size == 0:
+                  raise SystemExit(
+                      "CHYBA: Vysledne video chybi."
+                  )
+
+              suffix = "_DEMO" if mode == "fixture" else ""
+
+              target = video.with_name(
+                  f"be6player_shorts_{expected}{suffix}.mp4"
+              )
+
+              video.rename(target)
+              print("Vysledne video:", target)
+
+          else:
+              print("Pro toto datum nejsou zadne zapasy.")
+
+          with open(
+              os.environ["GITHUB_STEP_SUMMARY"],
+              "a",
+              encoding="utf-8"
+          ) as f:
+              f.write(f"\n- Overene datum: {actual}\n")
+              f.write(f"- Pocet zapasu: {count}\n")
+
+          print("KONTROLA DOKONCENA")
+          PY
 
       - name: Kontrolni protokol
         if: always()
@@ -92,11 +239,11 @@ jobs:
             cat shorts_preview/verification.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Ulozit vysledky (bez YouTube uploadu)
+      - name: Ulozit vysledky bez YouTube uploadu
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: be6player-shorts-v67-${{ github.run_id }}
+          name: be6player-${{ env.VIDEO_DATE }}-${{ env.VIDEO_MODE }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
           retention-days: 14
