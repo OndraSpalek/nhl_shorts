@@ -1,5 +1,5 @@
-name: Be6player Shorts V6.9.1 - NHL video
-run-name: Be6player V6.9.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V6.9.2 - NHL video
+run-name: Be6player V6.9.2 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   workflow_dispatch:
     inputs:
@@ -35,6 +35,8 @@ jobs:
           from pathlib import Path
           from PIL import Image
           from v65 import logos
+          for code in ("CAR", "NYR"):
+              (Path("assets/logos") / f"{code}.png").unlink(missing_ok=True)
           logos(["CAR", "NYR"], strict=True)
           for code in ("CAR", "NYR"):
               path = Path("assets/logos") / f"{code}.png"
@@ -42,6 +44,8 @@ jobs:
                   img.verify()
               print(f"{path}: OK")
           PYTHON
+      - name: Kontrola nove sablony
+        run: test -f assets/arena_v692.png
       - name: Testy
         run: python -m unittest discover -s . -p 'test_*.py' -v
       - name: Generovani a kontrola
