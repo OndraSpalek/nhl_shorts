@@ -1,0 +1,55 @@
+{
+  "schedule": {
+    "gameWeek": [
+      {
+        "date": "2026-11-22",
+        "games": [
+          {
+            "id": 100,
+            "gameType": 2,
+            "startTimeUTC": "2026-11-23T00:00:00Z",
+            "gameState": "FUT",
+            "homeTeam": {
+              "abbrev": "CAR"
+            },
+            "awayTeam": {
+              "abbrev": "NYR"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "standings": {
+    "standings": [
+      {
+        "teamAbbrev": {
+          "default": "CAR"
+        },
+        "wins": 12,
+        "losses": 5,
+        "otLosses": 2,
+        "conferenceSequence": 3,
+        "conferenceAbbrev": "E"
+      },
+      {
+        "teamAbbrev": {
+          "default": "NYR"
+        },
+        "wins": 8,
+        "losses": 9,
+        "otLosses": 1,
+        "conferenceSequence": 9,
+        "conferenceAbbrev": "E"
+      }
+    ]
+  },
+  "club_schedules": {
+    "CAR": {
+      "games": []
+    },
+    "NYR": {
+      "games": []
+    }
+  }
+}

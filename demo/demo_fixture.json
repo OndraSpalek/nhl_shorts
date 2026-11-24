@@ -1,0 +1,290 @@
+{
+  "brand": "Be6player",
+  "local_date": "2026-11-22",
+  "timezone": "Europe/Prague",
+  "window_start": "2026-11-22T10:00:00+01:00",
+  "window_end": "2026-11-23T10:00:00+01:00",
+  "games": [
+    {
+      "id": 100,
+      "start_utc": "2026-11-23T00:00:00+00:00",
+      "start_prague": "2026-11-23T01:00:00+01:00",
+      "game_type": 2,
+      "home": {
+        "abbrev": "CAR",
+        "wins": 12,
+        "losses": 5,
+        "ot_losses": 2,
+        "conference_rank": 3,
+        "conference": null,
+        "form_all": {
+          "V": 5,
+          "P": 0,
+          "PP": 0,
+          "games": [
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            }
+          ],
+          "points_pct": 100.0,
+          "sample_size": 5
+        },
+        "form_home": {
+          "V": 5,
+          "P": 0,
+          "PP": 0,
+          "games": [
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "H",
+              "opponent": "NYR",
+              "score": "4:2",
+              "result": "V"
+            }
+          ],
+          "points_pct": 100.0,
+          "sample_size": 5
+        },
+        "form_away": {
+          "V": 0,
+          "P": 0,
+          "PP": 0,
+          "games": [],
+          "points_pct": null,
+          "sample_size": 0
+        },
+        "streak": {
+          "type": "vyhry",
+          "length": 6
+        }
+      },
+      "away": {
+        "abbrev": "NYR",
+        "wins": 8,
+        "losses": 9,
+        "ot_losses": 1,
+        "conference_rank": 9,
+        "conference": null,
+        "form_all": {
+          "V": 0,
+          "P": 5,
+          "PP": 0,
+          "games": [
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            }
+          ],
+          "points_pct": 0.0,
+          "sample_size": 5
+        },
+        "form_home": {
+          "V": 0,
+          "P": 0,
+          "PP": 0,
+          "games": [],
+          "points_pct": null,
+          "sample_size": 0
+        },
+        "form_away": {
+          "V": 0,
+          "P": 5,
+          "PP": 0,
+          "games": [
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            },
+            {
+              "date": "2026-11-20",
+              "venue": "R",
+              "opponent": "CAR",
+              "score": "2:4",
+              "result": "P"
+            }
+          ],
+          "points_pct": 0.0,
+          "sample_size": 5
+        },
+        "streak": {
+          "type": "bez_vyhry",
+          "length": 6
+        }
+      },
+      "interest_score": 132.0,
+      "featured_fact": {
+        "category": "venue_form",
+        "text": "CAR má výrazně lepší formu: CAR doma 5–0–0, NYR venku 0–5–0",
+        "score": 98,
+        "details": {
+          "difference_pp": 100
+        }
+      },
+      "secondary_fact": {
+        "category": "overall_form",
+        "text": "Forma posledních 5: CAR 5–0–0, NYR 0–5–0",
+        "score": 85,
+        "details": {
+          "difference_pp": 100
+        }
+      },
+      "all_candidates": [
+        {
+          "category": "venue_form",
+          "text": "CAR má výrazně lepší formu: CAR doma 5–0–0, NYR venku 0–5–0",
+          "score": 98,
+          "details": {
+            "difference_pp": 100
+          }
+        },
+        {
+          "category": "overall_form",
+          "text": "Forma posledních 5: CAR 5–0–0, NYR 0–5–0",
+          "score": 85,
+          "details": {
+            "difference_pp": 100
+          }
+        },
+        {
+          "category": "team_streak",
+          "text": "CAR vyhrál 6 zápasů v řadě",
+          "score": 80,
+          "details": {
+            "team": "CAR",
+            "length": 6
+          }
+        },
+        {
+          "category": "team_streak",
+          "text": "NYR nevyhrál 6 zápasů v řadě",
+          "score": 80,
+          "details": {
+            "team": "NYR",
+            "length": 6
+          }
+        }
+      ],
+      "game_of_day": true
+    }
+  ],
+  "game_count": 1,
+  "note": "DEMO: testovací data, nikoliv skutečný program NHL",
+  "game_of_day_id": 100,
+  "ranking_version": "1.0",
+  "ranking_note": "Jen doložené zajímavosti; neověřené externí statistiky se ignorují."
+}
