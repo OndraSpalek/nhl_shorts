@@ -1,5 +1,5 @@
-name: Be6player Shorts V7.0 - NHL video
-run-name: Be6player V7.0 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V7.0.1 - NHL video
+run-name: Be6player V7.0.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   workflow_dispatch:
     inputs:
@@ -46,7 +46,7 @@ jobs:
           PYTHON
       - name: Kontrola souboru
         run: |
-          for f in assets/arena_v692.png assets/arena_master.png examples/car_nyr.json examples/demo.json demo/offline_api_fixture.json shorts_match_facts.py; do test -f "$f" || { echo "Chybi $f"; exit 1; }; done
+          for f in assets/arena_v701.png render_advanced.py assets/arena_v692.png assets/arena_master.png examples/car_nyr.json examples/demo.json demo/offline_api_fixture.json shorts_match_facts.py; do test -f "$f" || { echo "Chybi $f"; exit 1; }; done
       - name: Testy
         run: python -m unittest discover -s . -p 'test_*.py' -v
       - name: Generovani a kontrola
@@ -72,6 +72,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-v70-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v701-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
