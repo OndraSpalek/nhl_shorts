@@ -1,0 +1,58 @@
+name: Be6player Shorts V6.9 - NHL video
+run-name: Be6player V6.9 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: Datum CR (YYYY-MM-DD), prazdne = dnes
+        type: string
+        default: ''
+      mode:
+        description: live nebo offline test
+        type: choice
+        default: live
+        options: [live, fixture]
+permissions:
+  contents: read
+jobs:
+  shorts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Instalace
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core libcairo2
+          pip install -r requirements-shorts.txt
+      - name: Testy
+        run: python -m unittest discover -s . -p 'test_*.py' -v
+      - name: Generovani a kontrola
+        env:
+          INPUT_DATE: ${{ inputs.date }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          DAY="${INPUT_DATE:-$(TZ=Europe/Prague date +%F)}"
+          args=()
+          verify=()
+          if [ "$MODE" = fixture ]; then
+            DAY=2026-11-22
+            args=(--fixture demo/offline_api_fixture.json --seconds 2)
+          else
+            verify=(--require-live)
+          fi
+          rm -rf shorts_preview
+          python v66_pipeline.py --date "$DAY" --outdir shorts_preview --render "${args[@]}"
+          python v67_verify.py --outdir shorts_preview "${verify[@]}"
+          python v69_stamp.py "$DAY" "$MODE"
+      - name: Vysledky
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: be6player-v69-${{ github.run_id }}-${{ github.run_attempt }}
+          path: shorts_preview/
+          if-no-files-found: warn
