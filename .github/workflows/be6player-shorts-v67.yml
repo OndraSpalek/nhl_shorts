@@ -1,7 +1,7 @@
 
-name: Be6player Shorts V6.8 - NHL video
+name: Be6player Shorts V6.8.1 - NHL video
 
-run-name: Be6player V6.8 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+run-name: Be6player V6.8.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 
 on:
   workflow_dispatch:
@@ -57,13 +57,14 @@ jobs:
           echo "VIDEO_MODE=$INPUT_MODE" >> "$GITHUB_ENV"
 
           echo "================================"
+          echo "Be6player V6.8.1"
           echo "Datum videa: $DAY"
           echo "Rezim: $INPUT_MODE"
           echo "Aktualni cas v CR:"
           TZ=Europe/Prague date
           echo "================================"
 
-          echo "## Be6player V6.8" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Be6player V6.8.1" >> "$GITHUB_STEP_SUMMARY"
           echo "- Datum videa: $DAY" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rezim: $INPUT_MODE" >> "$GITHUB_STEP_SUMMARY"
 
@@ -79,7 +80,9 @@ jobs:
             shorts_data.py \
             shorts_rank.py \
             render.py \
-            assets/arena_master.png
+            assets/arena_master.png \
+            examples/car_nyr.json \
+            examples/demo.json
           do
             if [ ! -f "$file" ]; then
               echo "CHYBA: Chybi $file"
@@ -99,18 +102,54 @@ jobs:
         run: |
           set -euo pipefail
 
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            fonts-dejavu-core \
+            libcairo2
+
           if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get update
             sudo apt-get install -y ffmpeg
           fi
-
-          sudo apt-get install -y fonts-dejavu-core libcairo2
 
           ffmpeg -version | sed -n '1p'
 
           python -m pip install \
             --disable-pip-version-check \
-            pillow requests cairosvg tzdata
+            pillow \
+            requests \
+            cairosvg \
+            tzdata
+
+      - name: Stahnout oficialni loga NHL pro testy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p assets/logos
+
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          from v65 import logos
+
+          logos(["CAR", "NYR"], strict=True)
+
+          for code in ("CAR", "NYR"):
+              path = Path("assets/logos") / f"{code}.png"
+
+              if not path.is_file():
+                  raise SystemExit(
+                      f"CHYBA: Chybi logo {code}"
+                  )
+
+              with Image.open(path) as img:
+                  img.verify()
+
+              print(f"Logo {code}: OK")
+
+          print("Oficialni loga pro testy jsou pripravena.")
+          PY
 
       - name: Jednotkove testy
         shell: bash
@@ -127,15 +166,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           rm -rf shorts_preview
           mkdir -p shorts_preview
+
+          echo "Stare vystupy odstraneny."
 
       - name: Vytvorit aktualni video a audit
         shell: bash
         run: |
           set -euo pipefail
 
+          echo "================================"
           echo "Generuji video pro $VIDEO_DATE"
+          echo "Rezim: $VIDEO_MODE"
+          echo "================================"
 
           if [ "$VIDEO_MODE" = "fixture" ]; then
 
@@ -173,10 +218,13 @@ jobs:
           import os
           from pathlib import Path
 
+          audit_path = Path("shorts_preview/audit.json")
+
+          if not audit_path.is_file():
+              raise SystemExit("CHYBA: Chybi audit.json")
+
           audit = json.loads(
-              Path("shorts_preview/audit.json").read_text(
-                  encoding="utf-8"
-              )
+              audit_path.read_text(encoding="utf-8")
           )
 
           expected = os.environ["VIDEO_DATE"]
@@ -198,11 +246,17 @@ jobs:
                   "CHYBA: Video nepouziva zivy rezim."
               )
 
+          if mode == "fixture" and audit.get("mode") != "OFFLINE_FIXTURE_NOT_LIVE":
+              raise SystemExit(
+                  "CHYBA: Nespravny testovaci rezim."
+              )
+
           video = Path(
               "shorts_preview/video/be6player_shorts.mp4"
           )
 
           if count > 0:
+
               if not video.is_file() or video.stat().st_size == 0:
                   raise SystemExit(
                       "CHYBA: Vysledne video chybi."
@@ -215,10 +269,17 @@ jobs:
               )
 
               video.rename(target)
+
               print("Vysledne video:", target)
+              print("Velikost videa:", target.stat().st_size)
 
           else:
               print("Pro toto datum nejsou zadne zapasy.")
+
+              if video.exists():
+                  raise SystemExit(
+                      "CHYBA: Video existuje, ale audit nema zapasy."
+                  )
 
           with open(
               os.environ["GITHUB_STEP_SUMMARY"],
@@ -227,6 +288,11 @@ jobs:
           ) as f:
               f.write(f"\n- Overene datum: {actual}\n")
               f.write(f"- Pocet zapasu: {count}\n")
+
+              if count > 0:
+                  f.write(f"- Video: {target.name}\n")
+              else:
+                  f.write("- Pro toto datum nejsou zapasy.\n")
 
           print("KONTROLA DOKONCENA")
           PY
@@ -243,7 +309,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-${{ env.VIDEO_DATE }}-${{ env.VIDEO_MODE }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v681-${{ env.VIDEO_DATE }}-${{ env.VIDEO_MODE }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
           retention-days: 14
