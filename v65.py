@@ -4,6 +4,7 @@ import argparse,json,math,subprocess,tempfile,wave,array,shutil
 from pathlib import Path
 from datetime import datetime
 from render import render,ROOT
+from render_advanced import render_advanced
 
 CODES='ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LAK MIN MTL NJD NSH NYI NYR OTT PHI PIT SEA SJS STL TBL TOR UTA VAN VGK WPG WSH'.split()
 LOGO_URL='https://assets.nhle.com/logos/nhl/svg/{code}_light.svg'
@@ -80,6 +81,7 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
     for i,g in enumerate(games,1):
         g=dict(g,_game_of_day_id=data.get('game_of_day_id'),_demo=data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE')
         p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)
+        p=cards/f'game_{i:02d}_advanced.png';render_advanced(g,p);slides.append(p)
     shutil.copy2(slides[0],out/'nahled.png')
     seconds_per_card=min(seconds_per_card, 175/len(slides))
     duration=seconds_per_card*len(slides)
@@ -93,7 +95,7 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
         subprocess.run(cmd,check=True)
     (out/'titulek.txt').write_text('NHL dnes | Be6player – zápasy a statistiky\n',encoding='utf-8')
     (out/'popis.txt').write_text(f"Přehled NHL pro {data.get('local_date','zvolené datum')}. Statistiky týmů a zápas dne. #NHL #Hokej #Be6player #NHLShorts\n",encoding='utf-8')
-    (out/'manifest.json').write_text(json.dumps({'games':len(games),'seconds':duration,'audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
+    (out/'manifest.json').write_text(json.dumps({'games':len(games),'cards':len(slides),'seconds':duration,'audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
     return out/'be6player_shorts.mp4'
 
 if __name__=='__main__':

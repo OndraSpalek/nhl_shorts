@@ -59,12 +59,13 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
         for key, rows in extra['games'].items(): facts['games'].setdefault(key,[]).extend(rows)
         facts['warnings'].extend(extra['warnings'])
         facts['sources']['match_facts']=extra['sources']
+        for g in data['games']: g['match_metrics']=extra['metrics'].get(str(g['id']),{})
         data['data_endpoints'].extend(['/v1/club-schedule-season/{team}/{season}','/v1/gamecenter/{id}/landing'])
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'7.0','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'7.0.1','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}

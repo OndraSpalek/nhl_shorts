@@ -1,0 +1,8 @@
+V7.0.1 – aktualizace z V7.0
+Nahrajte všechny soubory z tohoto ZIPu do stejných cest v repozitáři.
+Přepsat v65.py, v66_pipeline.py, shorts_match_facts.py, v67_verify.py a .github/workflows/be6player_shorts_v69.yml.
+Nové: render_advanced.py, test_v701.py, assets/arena_v701.png.
+První karta a e-mailové workflow se nemění.
+Spustit fixture (dva snímky, chybějící data označena pomlčkou), poté nový běh live.
+V live jsou nové hodnoty v data.json -> games -> match_metrics, včetně podkladových zápasů. Druhá karta je video/cards/game_01_advanced.png.
+Odpočinek = čas mezi začátky zápasů. Produktivita a první gól z posledních 10 dokončených zápasů základní části. Vzájemné zápasy jen aktuální sezona. Pomlčka = nedostupná data. Délka 8 s/karta, při mnoha zápasech zkrácena na limit 175 s. Přechod je zatím přímý střih.
