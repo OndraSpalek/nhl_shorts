@@ -9,6 +9,7 @@ from shorts_import_stats import generate as csv_basic
 from shorts_import_advanced import generate as csv_advanced
 from v65 import build as make_video
 from shorts_live_stats import enrich
+from shorts_match_facts import enrich as match_facts
 
 
 def merge_facts(data, csv_dir, enable_csv):
@@ -53,11 +54,17 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     data['generated_utc']=datetime.now(timezone.utc).isoformat()
     data['data_endpoints']=['/v1/schedule/{date}','/v1/standings/{date}','/v1/club-schedule-season/{team}/now'] if fixture is None else []
     facts=enrich(data) if fixture is None else {'games':{},'warnings':['Offline demo: bez živých statistik'],'sources':{}}
+    if fixture is None:
+        extra=match_facts(data)
+        for key, rows in extra['games'].items(): facts['games'].setdefault(key,[]).extend(rows)
+        facts['warnings'].extend(extra['warnings'])
+        facts['sources']['match_facts']=extra['sources']
+        data['data_endpoints'].extend(['/v1/club-schedule-season/{team}/{season}','/v1/gamecenter/{id}/landing'])
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'6.9','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'7.0','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}

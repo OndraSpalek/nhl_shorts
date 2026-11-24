@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-BASE = {'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
+BASE = {'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
         'overall_form':75,'h2h':70,'special_teams':65,'period_goals':60,
         'first_goal_comebacks':58,'shots':55,'faceoffs':45}
 
@@ -66,6 +66,8 @@ def verified_external(game, facts):
         if cat=='player_streak' and not (e.get('point_streak',0)>=7 or e.get('goal_streak',0)>=4): continue
         if cat=='milestone' and not (0<e.get('remaining',999)<=2): continue
         if cat in ('first_goal_comebacks','period_goals','special_teams','shots','faceoffs') and e['sample_size']<10: continue
+        if cat=='scoring' and e['sample_size']<10: continue
+        if cat=='rest' and not 0<e.get('hours',999)<=30: continue
         bonus=min(15,max(0,int(f.get('bonus',0))))
         out.append(candidate(cat,text,BASE[cat]+bonus,e | {'source':f['source']}))
     return out
@@ -75,7 +77,7 @@ def rank(data, facts=None):
     ranked=[]
     for g in data.get('games',[]):
         candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]))
-        candidates.sort(key=lambda x:(-x['score'],x['category'],x['text']))
+        candidates.sort(key=lambda x:(x['category'] not in ('rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone'),-x['score'],x['category'],x['text']))
         first=candidates[0] if candidates else None
         second=next((c for c in candidates[1:] if c['category']!=first['category']),None) if first else None
         bonus=0
