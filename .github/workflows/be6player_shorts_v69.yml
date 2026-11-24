@@ -1,5 +1,5 @@
-name: Be6player Shorts V6.9 - NHL video
-run-name: Be6player V6.9 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V6.9.1 - NHL video
+run-name: Be6player V6.9.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   workflow_dispatch:
     inputs:
@@ -28,6 +28,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core libcairo2
           pip install -r requirements-shorts.txt
+      - name: Pripravit oficialni loga pro testy
+        run: |
+          set -euo pipefail
+          python - <<'PYTHON'
+          from pathlib import Path
+          from PIL import Image
+          from v65 import logos
+          logos(["CAR", "NYR"], strict=True)
+          for code in ("CAR", "NYR"):
+              path = Path("assets/logos") / f"{code}.png"
+              with Image.open(path) as img:
+                  img.verify()
+              print(f"{path}: OK")
+          PYTHON
       - name: Testy
         run: python -m unittest discover -s . -p 'test_*.py' -v
       - name: Generovani a kontrola
