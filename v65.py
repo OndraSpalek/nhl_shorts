@@ -29,7 +29,7 @@ def logos(codes, strict=True):
 
 def form(t,venue=None):
     x=t.get('form_'+venue if venue else 'form_all') or {}
-    return f"{x.get('V',0)}V/{x.get('P',0)}P/{x.get('PP',0)}PP" if x.get('sample_size') else 'N/D'
+    return f"{x.get('V',0)}-{x.get('P',0)}-{x.get('PP',0)}" if x.get('sample_size') else 'N/D'
 
 def pct(t, key):
     # Optional data from enriched pipeline: no fabricated percentages.
@@ -46,7 +46,7 @@ def mapped(g):
         s=t.get('streak') or {}
         return f"{s.get('length')}× {'V' if s.get('type')=='vyhry' else 'bez V'}" if s.get('length') else 'N/D'
     def place(t):return str(t.get('conference_rank') or 'N/D')
-    rows=[('BILANCE',record),('FORMA 5',lambda t:form(t)),('DOMA/VENKU',lambda t:form(t,'home' if t is h else 'away')),('VHAZOVÁNÍ',lambda t:pct(t,'faceoff_pct')),('STŘELY / ZÁPAS',lambda t: str(t.get('advanced',{}).get('shots_per_game','N/D')).replace('.',',')),('PŘESILOVKY',lambda t:pct(t,'power_play_pct')),('OSLABENÍ',lambda t:pct(t,'penalty_kill_pct'))]
+    rows=[('BILANCE',record),('POSLEDNÍCH 5 (V-P-PP)',lambda t:form(t)),('DOMA/VENKU (POSL. 5)',lambda t:form(t,'home' if t is h else 'away')),('VHAZOVÁNÍ',lambda t:pct(t,'faceoff_pct')),('STŘELY / ZÁPAS',lambda t: str(t.get('advanced',{}).get('shots_per_game','N/D')).replace('.',',')),('PP%',lambda t:pct(t,'power_play_pct')),('PK%',lambda t:pct(t,'penalty_kill_pct'))]
     fact=(g.get('featured_fact') or {}).get('text') or 'Předzápasové srovnání týmů NHL.'
     return {'home':h['abbrev'],'away':a['abbrev'],'home_name':h['abbrev'],'away_name':a['abbrev'], 'title':'ZÁPAS DNE' if str(g.get('id'))==str(g.get('_game_of_day_id')) else 'PŘEDZÁPASOVÉ SROVNÁNÍ', 'rows':[{'label':label,'home':fn(h),'away':fn(a)} for label,fn in rows], 'caption':fact[:135], 'source_label': 'DEMO • ILUSTRAČNÍ DATA' if g.get('_demo') else 'NHL API • PŘEDZÁPASOVÁ DATA'}
 

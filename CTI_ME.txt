@@ -1,19 +1,9 @@
-Be6player – dílčí bezpečná oprava chybějících zajímavostí a auditu
-
-Nahraď v kořeni repozitáře soubory:
-- shorts_rank.py
-- v66_pipeline.py
-- v65.py
-
-Co oprava dělá:
-1. Pokud žádná výrazná zajímavost nevyhoví prahům, ale oba týmy mají 5 předchozích zápasů, zobrazí ověřitelné srovnání jejich formy namísto obecného 'Dnešní zápas NHL'.
-2. Při existenci obou datově odpovídajících CSV souborů v kořeni je automaticky použije. Při --csv-dir zůstává původní režim zachován.
-3. Přidává do auditu text vybrané zajímavosti, počet kandidátů a upozornění na chybějící pokročilé statistiky.
-4. Opravuje zobrazení bilance s chybějícími hodnotami (None).
-
-DŮLEŽITÉ: Toto NENÍ kompletní oprava přesilovek/oslabení. Bez důvěryhodných dat bude nadále N/D. Oprava si čísla nevymýšlí. Existující render.py, hudba, loga a e-mailové workflow se nemění.
-
-Po nahrání spusť GitHub Actions -> Be6player Shorts V6.7 -> Run workflow -> mode live.
-Z Artifacts stáhni audit.json a video/be6player_shorts.mp4.
-
-Lokální kontrola: python -m py_compile shorts_rank.py v66_pipeline.py v65.py
+BE6PLAYER V6.9.2 – aktualizace grafiky
+1. Zálohujte repozitář. Rozbalte ZIP.
+2. V kořeni repozitáře přepište render.py a v65.py.
+3. Otevřete existující složku assets a nahrajte arena_v692.png. Staré soubory nemažte.
+4. V .github/workflows přepište be6player_shorts_v69.yml (obnoví testovací loga CAR/NYR z NHL a zkontroluje novou šablonu).
+5. Actions: V6.9.2, main, fixture, datum prázdné. Poté live.
+Šablona obsahuje pevné grafické popisky a ikony, nikoli týmové zkratky ani statistiky. Ty doplňuje Python. Neměňte pořadí sedmi řádků bez změny šablony.
+Lokálně 35 testů OK; živé stažení log a GitHub nebyly ověřeny. Náhled je ilustrační, stará lokální loga CAR/NYR nejsou kvalitní, proto workflow obnovuje jejich soubory.
+E-mailové automatizace se změna netýká.
