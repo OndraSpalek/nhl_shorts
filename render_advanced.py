@@ -16,9 +16,13 @@ def render_advanced(g,dest):
             logo=Image.open(p).convert('RGBA');logo=logo.crop(logo.getchannel('A').getbbox());logo.thumbnail((200,200));im.paste(logo,(round(x-logo.width/2),round(490-logo.height/2)),logo)
         else:txt(d,'BEZ LOGA',(x,490),30,190)
         txt(d,code,(x,645),46,230)
+        m=metrics.get(code,{})
+        label=('DOMA' if side=='home' else 'VENKU')+' – SEZONA'
+        if 'venue_sample' in m: label+=f" ({m['venue_sample']})"
+        txt(d,label,(x,710),23,310)
         for y,v in zip([774,873,974,1075,1174,1263,1353,1444],values(metrics.get(code,{}))):txt(d,v,(x,y),48,260)
     candidates=[c for c in g.get('all_candidates',[]) if c['category'] in ('h2h','rest','scoring','first_goal_comebacks','period_goals')]
-    caption=candidates[0]['text'] if candidates else 'Produktivita a první gól: posledních 10 utkání.'
+    caption=candidates[0]['text'] if candidates else 'Produktivita a první gól: celá sezona doma/venku.'
     words=caption.split();lines=[];line=''
     for w in words:
         trial=(line+' '+w).strip()

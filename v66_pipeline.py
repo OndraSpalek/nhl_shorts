@@ -65,7 +65,7 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'7.0.1','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'7.0.2','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}

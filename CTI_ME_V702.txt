@@ -1,0 +1,1 @@
+V7.0.2: Nahraj čtyři aktualizované soubory a test_v701.py na stejné cesty. Grafické PNG neměň. Spusť fixture, poté live. Druhá karta: celá aktuální základní část doma/venku; vzájemné zápasy a odpočinek bez omezení místa. Číslo v závorce je počet zápasů. Při neúplných datech o gólech se zobrazí pomlčka.
