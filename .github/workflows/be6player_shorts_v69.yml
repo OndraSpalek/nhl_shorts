@@ -1,5 +1,5 @@
-name: Be6player Shorts V7.0.1 - NHL video
-run-name: Be6player V7.0.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V7.0.2 - NHL video
+run-name: Be6player V7.0.2 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   workflow_dispatch:
     inputs:
@@ -72,6 +72,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-v701-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v702-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
