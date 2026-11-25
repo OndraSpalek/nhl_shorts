@@ -107,6 +107,7 @@ jobs:
           retention-days: 14
 
       - name: Samostatny e-mail Shorts
+        continue-on-error: true
         if: success() && (inputs.mode != 'fixture') && steps.artifact.outputs.artifact-id != ''
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
