@@ -21,8 +21,8 @@ def render_advanced(g,dest):
         if 'venue_sample' in m: label+=f" ({m['venue_sample']})"
         txt(d,label,(x,710),23,310)
         for y,v in zip([774,873,974,1075,1174,1263,1353,1444],values(metrics.get(code,{}))):txt(d,v,(x,y),48,260)
-    candidates=[c for c in g.get('all_candidates',[]) if c['category'] in ('h2h','rest','scoring','first_goal_comebacks','period_goals','player_streak','goalie','player_leader','historical_h2h') and c['text'] != g.get('featured_fact',{}).get('text')]
-    caption=candidates[0]['text'] if candidates else 'Produktivita a první gól: celá sezona doma/venku.'
+    secondary=g.get('secondary_fact')
+    caption=secondary['text'] if secondary else 'Produktivita a první gól: celá sezona doma/venku.'
     words=caption.split();lines=[];line=''
     for w in words:
         trial=(line+' '+w).strip()

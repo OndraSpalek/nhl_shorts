@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-BASE = {'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
+BASE = {'game_flow':83,'historical_record':96,'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
         'overall_form':75,'h2h':70,'special_teams':65,'period_goals':60,
         'first_goal_comebacks':58,'shots':55,'faceoffs':45}
 
@@ -62,6 +62,7 @@ def verified_external(game, facts):
         if not text or len(text)>180: continue
         # No unsupported statistical claims; evidence must be auditable.
         if not isinstance(e.get('sample_size'),int) or e['sample_size']<1: continue
+        if cat=='game_flow' and (e['sample_size']<5 or not 0<=e.get('wins',-1)<=e['sample_size']): continue
         if cat=='h2h' and (e['sample_size']<5 or e.get('wins',0)<4): continue
         if cat=='player_streak' and not (e.get('point_streak',0)>=7 or e.get('goal_streak',0)>=4): continue
         if cat=='milestone' and not (0<e.get('remaining',999)<=2): continue
@@ -77,9 +78,9 @@ def rank(data, facts=None):
     ranked=[]
     for g in data.get('games',[]):
         candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]))
-        candidates.sort(key=lambda x:(x['category'] not in ('rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
+        candidates.sort(key=lambda x:(x['category'] not in ('historical_record','game_flow','rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
         first=candidates[0] if candidates else None
-        second=next((c for c in candidates[1:] if c['category']!=first['category']),None) if first else None
+        second=next((c for c in candidates[1:] if c['category']!=first['category'] and c['text']!=first['text']),None) if first else None
         bonus=0
         hr=g['home'].get('conference_rank'); ar=g['away'].get('conference_rank')
         if isinstance(hr,int) and isinstance(ar,int) and hr<=4 and ar<=4: bonus+=10
