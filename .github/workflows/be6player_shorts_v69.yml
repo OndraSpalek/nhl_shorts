@@ -1,6 +1,9 @@
-name: Be6player Shorts V7.1 - NHL video
-run-name: Be6player V7.1 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V7.2 - NHL video
+run-name: Be6player V7.2 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
+  schedule:
+    - cron: "0 8 * * *"
+    - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       date:
@@ -14,8 +17,33 @@ on:
         options: [live, fixture]
 permissions:
   contents: read
+concurrency:
+  group: be6player-shorts-v72
+  cancel-in-progress: false
 jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    outputs:
+      proceed: ${{ steps.clock.outputs.proceed }}
+    steps:
+      - id: clock
+        env:
+          EVENT: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
+        run: |
+          python - <<'PYTHON'
+          import os
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          offset = datetime.now(ZoneInfo('Europe/Prague')).utcoffset().total_seconds()/3600
+          expected = f'0 {int(10-offset)} * * *'
+          proceed = os.environ['EVENT'] != 'schedule' or os.environ['CRON'] == expected
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              print(f'proceed={str(proceed).lower()}', file=f)
+          PYTHON
   shorts:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true' 
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -52,7 +80,7 @@ jobs:
       - name: Generovani a kontrola
         env:
           INPUT_DATE: ${{ inputs.date }}
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ inputs.mode || 'live' }}
         run: |
           set -euo pipefail
           DAY="${INPUT_DATE:-$(TZ=Europe/Prague date +%F)}"
@@ -69,9 +97,20 @@ jobs:
           python v67_verify.py --outdir shorts_preview "${verify[@]}"
           python v69_stamp.py "$DAY" "$MODE"
       - name: Vysledky
+        id: artifact
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-v71-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v72-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
+          retention-days: 14
+
+      - name: Samostatny e-mail Shorts
+        if: success() && (inputs.mode != 'fixture') && steps.artifact.outputs.artifact-id != ''
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          ARTIFACT_URL: ${{ steps.artifact.outputs.artifact-url }}
+        run: python shorts_notify.py
