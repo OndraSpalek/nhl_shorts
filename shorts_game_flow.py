@@ -1,5 +1,6 @@
 """Verified season game-flow facts, with complete scoring reconciliation."""
 from datetime import datetime, timezone
+import time
 from shorts_data import get_json, utc_datetime
 
 def parse(row, payload, code):
@@ -12,7 +13,7 @@ def parse(row, payload, code):
             if team not in (code,row['opponent']) or n not in (1,2,3,4): raise ValueError('invalid goal')
             mm,ss=map(int,goal['timeInPeriod'].split(':'))
             events.append((n,mm*60+ss,team))
-    events.sort(); win=row['gf']>row['ga']; so=row['shootout']
+    events.sort(key=lambda e: (e[0], e[1])); win=row['gf']>row['ga']; so=row['shootout']
     if not events or sum(t==code for _,_,t in events)!=row['gf']-int(so and win) or sum(t!=code for _,_,t in events)!=row['ga']-int(so and not win): raise ValueError('score mismatch')
     diff=0; led=False; trailed=False
     for _,_,t in events:
@@ -23,8 +24,15 @@ def enrich(data, fetch=get_json, now=None):
     now=now or datetime.now(timezone.utc); cache={}; result={'games':{},'metrics':{},'warnings':[],'sources':[]}
     def load(path):
         if path not in cache:
-            try: cache[path]=fetch(path)
-            except Exception as e: cache[path]=None; result['warnings'].append(f'{path}: {type(e).__name__}')
+            for attempt in range(3):
+                try:
+                    cache[path]=fetch(path)
+                    if not isinstance(cache[path],dict): raise ValueError('invalid response')
+                    break
+                except Exception as e:
+                    cache[path]=None
+                    if attempt==2: result['warnings'].append(f'{path}: {type(e).__name__}')
+                    elif fetch is get_json: time.sleep(2**attempt)
         return cache[path]
     for g in data['games']:
         gid=str(g['id']); out=result['games'][gid]=[]; metrics=result['metrics'][gid]={}; start=utc_datetime(g['start_utc']); cutoff=min(start,now); y=start.year-(start.month<7); season=y*10000+y+1
@@ -36,10 +44,15 @@ def enrich(data, fetch=get_json, now=None):
                     h,a=x['homeTeam'],x['awayTeam']; u,v=(h,a) if h['abbrev']==code else (a,h)
                     if u['abbrev']!=code or type(u['score'])!=int or type(v['score'])!=int or u['score']==v['score']: raise ValueError('invalid schedule')
                     rows[x['id']]=dict(id=x['id'],start=x['startTimeUTC'],opponent=v['abbrev'],gf=u['score'],ga=v['score'],shootout=x['gameOutcome']['lastPeriodType']=='SO')
-                for row in rows.values(): parsed.append(parse(row,load(f"/gamecenter/{row['id']}/landing"),code))
+                for row in rows.values():
+                    path=f"/gamecenter/{row['id']}/landing"
+                    try: parsed.append(parse(row,load(path),code))
+                    except (KeyError,TypeError,ValueError,AttributeError) as e:
+                        result['warnings'].append(f"{gid} {code} game {row['id']}: {type(e).__name__}: {e}")
             except (KeyError,TypeError,ValueError,AttributeError) as e:
                 result['warnings'].append(f'{gid} {code}: neúplný průběh ({type(e).__name__})'); continue
-            m=metrics[code]={'season':season,'sample_size':len(parsed),'games':parsed}
+            m=metrics[code]={'season':season,'sample_size':len(parsed),'expected_games':len(rows),'missing_game_ids':sorted(set(rows)-{r['id'] for r in parsed}),'complete':len(parsed)==len(rows),'games':parsed}
+            if not m['complete']: continue
             streak=[]
             for r in sorted(parsed,key=lambda r:r['start'],reverse=True):
                 if not r['win']: break

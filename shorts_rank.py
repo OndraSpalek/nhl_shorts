@@ -7,6 +7,7 @@ Only supported categories with checked evidence are eligible; no fabricated fact
 """
 import argparse
 import json
+import re
 from pathlib import Path
 
 BASE = {'game_flow':83,'historical_record':96,'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
@@ -59,7 +60,11 @@ def verified_external(game, facts):
         if not f.get('verified') or not f.get('source') or cat not in BASE or cat in ('team_streak','venue_form','overall_form'):
             continue
         text=f.get('text','').strip()
-        if not text or len(text)>180: continue
+        text=re.sub(r'(?<=\d)\.(?=\d+\s*%)', ',', text)
+        text=re.sub(r'\b([234]) gólů\b', r'\1 góly', text) if cat=='hat_trick' else text
+        for old,new in [('Pastrnak','Pastrňák'),('Necas','Nečas'),('Hertl','Hertl')]:
+            text=re.sub(r'\b'+old+r'\b',new,text)
+        if not text or len(text)>145: continue
         # No unsupported statistical claims; evidence must be auditable.
         if not isinstance(e.get('sample_size'),int) or e['sample_size']<1: continue
         if cat=='game_flow' and (e['sample_size']<5 or not 0<=e.get('wins',-1)<=e['sample_size']): continue
@@ -76,11 +81,14 @@ def verified_external(game, facts):
 def rank(data, facts=None):
     facts=facts or {}; fact_games=facts.get('games') or {}
     ranked=[]
+    used_categories={}
     for g in data.get('games',[]):
         candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]))
         candidates.sort(key=lambda x:(x['category'] not in ('historical_record','game_flow','rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
         first=candidates[0] if candidates else None
-        second=next((c for c in candidates[1:] if c['category']!=first['category'] and c['text']!=first['text']),None) if first else None
+        alternatives=[c for c in candidates[1:] if c['category']!=first['category'] and c['text']!=first['text']] if first else []
+        second=max(alternatives,key=lambda c:c['score']-min(12,3*used_categories.get(c['category'],0)),default=None)
+        if second: used_categories[second['category']]=used_categories.get(second['category'],0)+1
         bonus=0
         hr=g['home'].get('conference_rank'); ar=g['away'].get('conference_rank')
         if isinstance(hr,int) and isinstance(ar,int) and hr<=4 and ar<=4: bonus+=10
