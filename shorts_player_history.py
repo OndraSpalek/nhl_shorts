@@ -41,7 +41,7 @@ def enrich(data, fetch=get_json, now=None):
                 sk=side.get('forwards',[])+side.get('defense',[]); gs=side.get('goalies',[])
                 if not sk or not gs or any(not all(type(p.get(k))==int for k in ('playerId','goals','assists','points')) for p in sk): complete=False; continue
                 for p in sk:
-                    pid=p['playerId']; name=p.get('name',{}).get('default',str(pid)); q=players.setdefault(pid,{'name':name,'games':[]})
+                    pid=p['playerId']; name=p.get('name',{}).get('default',str(pid)); q=players.setdefault(pid,{'player_id':pid,'name':name,'games':[]})
                     q['games'].append({'id':r['id'],'goals':p['goals'],'assists':p['assists'],'points':p['points']})
                 for p in gs:
                     try:

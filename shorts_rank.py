@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-BASE = {'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
+BASE = {'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
         'overall_form':75,'h2h':70,'special_teams':65,'period_goals':60,
         'first_goal_comebacks':58,'shots':55,'faceoffs':45}
 
@@ -77,7 +77,7 @@ def rank(data, facts=None):
     ranked=[]
     for g in data.get('games',[]):
         candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]))
-        candidates.sort(key=lambda x:(x['category'] not in ('rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h'),-x['score'],x['category'],x['text']))
+        candidates.sort(key=lambda x:(x['category'] not in ('rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
         first=candidates[0] if candidates else None
         second=next((c for c in candidates[1:] if c['category']!=first['category']),None) if first else None
         bonus=0
