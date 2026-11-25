@@ -1,5 +1,5 @@
-name: Be6player Shorts V7.5.3 - NHL video
-run-name: Be6player V7.5.3 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V7.5.4 - NHL video
+run-name: Be6player V7.5.4 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   schedule:
     - cron: "0 8 * * *"
@@ -101,7 +101,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-v753-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v754-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
           retention-days: 14
