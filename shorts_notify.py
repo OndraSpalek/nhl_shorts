@@ -3,6 +3,7 @@ import json
 import os
 import smtplib
 import ssl
+import time
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -30,9 +31,38 @@ def main():
     if msg is None:
         print('Bez ověřeného živého videa: e-mail se neposílá.')
         return
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=60, context=ssl.create_default_context()) as smtp:
-        smtp.login(os.environ['SMTP_USER'], os.environ['SMTP_PASSWORD'])
-        smtp.send_message(msg)
+    user = os.environ['SMTP_USER'].strip()
+    password = os.environ['SMTP_PASSWORD'].replace(' ', '').strip()
+    context = ssl.create_default_context()
+    # Retry only before sending, to avoid duplicate messages after ambiguous delivery.
+    for attempt, port in enumerate((465, 587, 465), 1):
+        smtp = None
+        try:
+            if port == 465:
+                smtp = smtplib.SMTP_SSL('smtp.gmail.com', port, timeout=60, context=context)
+            else:
+                smtp = smtplib.SMTP('smtp.gmail.com', port, timeout=60)
+                smtp.ehlo()
+                smtp.starttls(context=context)
+                smtp.ehlo()
+            smtp.login(user, password)
+        except smtplib.SMTPAuthenticationError:
+            if smtp: smtp.close()
+            raise RuntimeError('Gmail odmítl přihlášení. Zkontrolujte SMTP_USER a heslo aplikace SMTP_PASSWORD.') from None
+        except (smtplib.SMTPException, OSError) as exc:
+            if smtp: smtp.close()
+            print(f'Pokus {attempt}/3, port {port}: {type(exc).__name__}', flush=True)
+            if attempt == 3:
+                raise RuntimeError('SMTP připojení selhalo i po opakování.') from None
+            time.sleep(10 * attempt)
+            continue
+        try:
+            refused = smtp.send_message(msg)
+            if refused:
+                raise RuntimeError('Někteří příjemci byli odmítnuti.')
+        finally:
+            smtp.close()
+        break
     print('E-mail Shorts odeslán.')
 
 
