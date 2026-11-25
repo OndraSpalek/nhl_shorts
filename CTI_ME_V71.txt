@@ -1,0 +1,7 @@
+V7.1 – aktualizace z V7.0.2
+Nahraj do kořene animate_shorts.py a test_animation.py (nové), přepiš v65.py a v66_pipeline.py.
+Přepiš .github/workflows/be6player_shorts_v69.yml. Ostatní soubory neměň.
+Spusť nový běh fixture, poté live. Fixture má dvě krátké karty (2 s každá).
+Live má 8 s na kartu, při velkém počtu zápasů kratší, max. 175 s celkem.
+Animace odpovídá schválené ukázce, zkrácené karty mají rychlejší nástup.
+42 lokálních testů, offline pipeline PASS. Živý běh nebyl ověřen.

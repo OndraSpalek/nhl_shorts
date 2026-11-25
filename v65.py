@@ -5,6 +5,7 @@ from pathlib import Path
 from datetime import datetime
 from render import render,ROOT
 from render_advanced import render_advanced
+from animate_shorts import encode,FPS
 
 CODES='ANA BOS BUF CAR CBJ CGY CHI COL DAL DET EDM FLA LAK MIN MTL NJD NSH NYI NYR OTT PHI PIT SEA SJS STL TBL TOR UTA VAN VGK WPG WSH'.split()
 LOGO_URL='https://assets.nhle.com/logos/nhl/svg/{code}_light.svg'
@@ -83,19 +84,16 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
         p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)
         p=cards/f'game_{i:02d}_advanced.png';render_advanced(g,p);slides.append(p)
     shutil.copy2(slides[0],out/'nahled.png')
-    seconds_per_card=min(seconds_per_card, 175/len(slides))
-    duration=seconds_per_card*len(slides)
+    if seconds_per_card <= 0: raise ValueError('Neplatná délka karty')
+    frames_per_card=max(1,int(min(seconds_per_card,175/len(slides))*FPS))
+    duration=frames_per_card*len(slides)/FPS
     with tempfile.TemporaryDirectory() as tmp:
-        tmp=Path(tmp);listing=tmp/'slides.ffconcat';parts=['ffconcat version 1.0']
-        for p in slides:parts.extend([f"file '{p.resolve()}'",f'duration {seconds_per_card}'])
-        parts.append(f"file '{slides[-1].resolve()}'")
-        listing.write_text('\n'.join(parts)+'\n',encoding='utf-8')
-        instrumental(tmp/'original_music.wav',duration)
-        cmd=['ffmpeg','-y','-hide_banner','-loglevel','error','-safe','0','-f','concat','-i',str(listing),'-i',str(tmp/'original_music.wav'),'-map','0:v:0','-map','1:a:0','-vf','fps=12,format=yuv420p','-c:v','libx264','-preset','veryfast','-crf','25','-c:a','aac','-b:a','128k','-t',str(duration),'-movflags','+faststart',str(out/'be6player_shorts.mp4')]
-        subprocess.run(cmd,check=True)
+        music=Path(tmp)/'original_music.wav'
+        instrumental(music,duration)
+        encode(slides,ROOT,music,out/'be6player_shorts.mp4',frames_per_card)
     (out/'titulek.txt').write_text('NHL dnes | Be6player – zápasy a statistiky\n',encoding='utf-8')
     (out/'popis.txt').write_text(f"Přehled NHL pro {data.get('local_date','zvolené datum')}. Statistiky týmů a zápas dne. #NHL #Hokej #Be6player #NHLShorts\n",encoding='utf-8')
-    (out/'manifest.json').write_text(json.dumps({'games':len(games),'cards':len(slides),'seconds':duration,'audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
+    (out/'manifest.json').write_text(json.dumps({'games':len(games),'cards':len(slides),'seconds':duration,'fps':FPS,'animation':'V7.1 reveal and crossfade','audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
     return out/'be6player_shorts.mp4'
 
 if __name__=='__main__':
