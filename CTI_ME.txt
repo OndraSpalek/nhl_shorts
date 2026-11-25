@@ -1,9 +1,1 @@
-BE6PLAYER V6.9.2 – aktualizace grafiky
-1. Zálohujte repozitář. Rozbalte ZIP.
-2. V kořeni repozitáře přepište render.py a v65.py.
-3. Otevřete existující složku assets a nahrajte arena_v692.png. Staré soubory nemažte.
-4. V .github/workflows přepište be6player_shorts_v69.yml (obnoví testovací loga CAR/NYR z NHL a zkontroluje novou šablonu).
-5. Actions: V6.9.2, main, fixture, datum prázdné. Poté live.
-Šablona obsahuje pevné grafické popisky a ikony, nikoli týmové zkratky ani statistiky. Ty doplňuje Python. Neměňte pořadí sedmi řádků bez změny šablony.
-Lokálně 35 testů OK; živé stažení log a GitHub nebyly ověřeny. Náhled je ilustrační, stará lokální loga CAR/NYR nejsou kvalitní, proto workflow obnovuje jejich soubory.
-E-mailové automatizace se změna netýká.
+V7.2: nahraj shorts_notify.py a přepiš v66_pipeline.py a .github/workflows/be6player_shorts_v69.yml. Ostatní soubory ponech. Používá existující repository secrets SMTP_USER, SMTP_PASSWORD, MAIL_TO (Gmail SMTP). Pokud nejsou v tomto repozitáři, nastav je v Settings / Secrets and variables / Actions. Fixture e-mail neposílá. Live po úspěšném uploadu videa odešle odkaz. Den bez zápasů neposílá e-mail. GitHub plánuje 08:00 a 09:00 UTC, časová brána propustí správný termín podle Prahy. Skutečný start může být opožděn. Ruční běh je vždy možný. Concurrency omezuje souběh, nikoli opakované ruční spuštění. Živý SMTP ani GitHub nebyly lokálně testovány.
