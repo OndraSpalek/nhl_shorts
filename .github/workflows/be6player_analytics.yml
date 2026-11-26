@@ -1,0 +1,56 @@
+name: Be6player YouTube Analytics V8.1.0
+on:
+  schedule:
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [fixture, live]
+        default: fixture
+permissions:
+  contents: read
+concurrency:
+  group: be6player-analytics
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m unittest test_youtube -v
+      - uses: actions/cache/restore@v4
+        if: inputs.mode != 'fixture'
+        with:
+          path: analytics_data
+          key: yt-analytics-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: yt-analytics-
+      - name: Collect
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          MODE: ${{ inputs.mode || 'live' }}
+        run: |
+          if [ "$MODE" = fixture ]; then
+            python shorts_youtube.py --fixture --out analytics_fixture
+          else
+            python shorts_youtube.py
+          fi
+      - uses: actions/cache/save@v4
+        if: always() && inputs.mode != 'fixture'
+        with:
+          path: analytics_data
+          key: yt-analytics-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: youtube-analytics-${{ github.run_id }}
+          path: |
+            analytics_data/
+            analytics_fixture/
+          retention-days: 30
