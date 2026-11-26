@@ -62,7 +62,7 @@ def verified_external(game, facts):
         text=f.get('text','').strip()
         text=re.sub(r'(?<=\d)\.(?=\d+\s*%)', ',', text)
         text=re.sub(r'\b([234]) gólů\b', r'\1 góly', text) if cat=='hat_trick' else text
-        for old,new in [('Pastrnak','Pastrňák'),('Necas','Nečas'),('Hertl','Hertl')]:
+        for old,new in [('Pastrnak','Pastrňák'),('Necas','Nečas'),('Chytil','Chytil'),('Zacha','Zacha'),('Hronek','Hronek'),('Gudas','Gudas'),('Kulich','Kulich'),('Slafkovsky','Slafkovský'),('Nemec','Nemec'),('Cernak','Černák'),('Fehervary','Fehérváry'),('Dvorsky','Dvorský'),('Mrazek','Mrázek'),('Vejmelka','Vejmelka'),('Dostal','Dostál'),('Kase','Kaše'),('Kampf','Kämpf'),('Rutta','Rutta'),('Palat','Palát'),('Klapka','Klapka'),('Kovacevic','Kovacevic')]:
             text=re.sub(r'\b'+old+r'\b',new,text)
         if not text or len(text)>145: continue
         # No unsupported statistical claims; evidence must be auditable.

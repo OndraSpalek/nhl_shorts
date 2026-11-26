@@ -13,6 +13,22 @@ def parse(row, payload, code):
             if team not in (code,row['opponent']) or n not in (1,2,3,4): raise ValueError('invalid goal')
             mm,ss=map(int,goal['timeInPeriod'].split(':'))
             events.append((n,mm*60+ss,team))
+    return reconcile(row,events,code)
+
+def parse_pbp(row,payload,code):
+    teams={payload[k]['id']:payload[k]['abbrev'] for k in ('homeTeam','awayTeam')}
+    if set(teams.values())!={code,row['opponent']} or payload['id']!=row['id']: raise ValueError('wrong game or teams')
+    events=[]; seen=set()
+    for play in payload['plays']:
+        if play.get('typeDescKey')!='goal': continue
+        desc=play['periodDescriptor']; n=desc['number']
+        if desc['periodType']=='SO': continue
+        if n not in (1,2,3,4) or play['eventId'] in seen: raise ValueError('invalid goal event')
+        seen.add(play['eventId']); mm,ss=map(int,play['timeInPeriod'].split(':'))
+        events.append((n,mm*60+ss,teams[play['details']['eventOwnerTeamId']]))
+    return reconcile(row,events,code)
+
+def reconcile(row,events,code):
     events.sort(key=lambda e: (e[0], e[1])); win=row['gf']>row['ga']; so=row['shootout']
     if not events or sum(t==code for _,_,t in events)!=row['gf']-int(so and win) or sum(t!=code for _,_,t in events)!=row['ga']-int(so and not win): raise ValueError('score mismatch')
     diff=0; led=False; trailed=False
@@ -21,7 +37,7 @@ def parse(row, payload, code):
     return dict(row,win=win,led=led,trailed=trailed,first_against=events[0][2]!=code,after1=sum(1 if t==code else -1 for n,_,t in events if n<=1),after2=sum(1 if t==code else -1 for n,_,t in events if n<=2),events=events)
 
 def enrich(data, fetch=get_json, now=None):
-    now=now or datetime.now(timezone.utc); cache={}; result={'games':{},'metrics':{},'warnings':[],'sources':[]}
+    now=now or datetime.now(timezone.utc); cache={}; result={'games':{},'metrics':{},'warnings':[],'sources':[],'diagnostics':{},'fallback_recovered':[]}
     def load(path):
         if path not in cache:
             for attempt in range(3):
@@ -46,9 +62,21 @@ def enrich(data, fetch=get_json, now=None):
                     rows[x['id']]=dict(id=x['id'],start=x['startTimeUTC'],opponent=v['abbrev'],gf=u['score'],ga=v['score'],shootout=x['gameOutcome']['lastPeriodType']=='SO')
                 for row in rows.values():
                     path=f"/gamecenter/{row['id']}/landing"
-                    try: parsed.append(parse(row,load(path),code))
+                    landing=load(path)
+                    try:
+                        parsed.append(dict(parse(row,landing,code),source=path))
                     except (KeyError,TypeError,ValueError,AttributeError) as e:
-                        result['warnings'].append(f"{gid} {code} game {row['id']}: {type(e).__name__}: {e}")
+                        alternative=f"/gamecenter/{row['id']}/play-by-play"
+                        pbp=load(alternative)
+                        diagnostic={'schedule':row,'landing_error':str(e),'landing':landing,'play_by_play':pbp}
+                        result['diagnostics'][f"{gid}:{code}:{row['id']}"]=diagnostic
+                        try:
+                            parsed.append(dict(parse_pbp(row,pbp,code),source=alternative))
+                            diagnostic['status']='recovered'
+                            result['fallback_recovered'].append(dict(game_id=row['id'],team=code))
+                        except (KeyError,TypeError,ValueError,AttributeError) as err:
+                            diagnostic.update(status='unresolved',fallback_error=str(err))
+                            result['warnings'].append(f"{gid} {code} game {row['id']}: {e}; play-by-play: {err}")
             except (KeyError,TypeError,ValueError,AttributeError) as e:
                 result['warnings'].append(f'{gid} {code}: neúplný průběh ({type(e).__name__})'); continue
             m=metrics[code]={'season':season,'sample_size':len(parsed),'expected_games':len(rows),'missing_game_ids':sorted(set(rows)-{r['id'] for r in parsed}),'complete':len(parsed)==len(rows),'games':parsed}
@@ -64,5 +92,5 @@ def enrich(data, fetch=get_json, now=None):
                 if n>=5 and (w/n>=.75 or w/n<=.25 or key in ('comeback','lost_lead') and n>=8):
                     text=f'{code}: v sezoně {label} vyhrál {w} z {n} utkání.'
                     if key=='lost_lead': text=f'{code}: v sezoně prohrál {n-w} z {n} utkání, ve kterých vedl.'
-                    out.append(dict(category='game_flow',text=text,verified=True,source='NHL API: /club-schedule-season + /gamecenter/{id}/landing',evidence=dict(sample_size=n,wins=w,kind=key,games=subset)))
+                    out.append(dict(category='game_flow',text=text,verified=True,source='NHL API: /club-schedule-season + /gamecenter/{id}/landing or play-by-play',evidence=dict(sample_size=n,wins=w,kind=key,games=subset)))
     result['sources']=list(cache); return result
