@@ -23,10 +23,10 @@ def enrich(data, history, fetch=get_json, now=None):
                 if hats:
                     maximum=max(x['goals'] for x in hats)
                     add('hat_trick',f'{code}: {name} vstřelil {maximum} {"góly" if maximum in (3,4) else "gólů"} v jednom z posledních {len(recent)} svých utkání.',recent,'/gamecenter/{id}/boxscore',hat_tricks=len(hats),max_goals=maximum)
-                for key, threshold, record, word, url in [('goals',70,92,'gólů','goals/skater-most-goals-one-season'),('points',160,215,'bodů','points/skater-most-points-one-season')]:
+                for key, threshold, record, word, url in [('goals',70,92,'gólů','goals/skater-most-goals-one-season'),('points',160,215,'bodů','points/skater-most-points-one-season'),('assists',120,163,'asistencí','assists/skater-most-assists-one-season')]:
                     total=sum(x.get(key,0) for x in games)
                     if total>=threshold:
-                        out.append(dict(category='historical_record',text=f'{code}: {name} má za tým {total} {word}. Gretzkyho historické maximum: {record} za sezonu.',verified=True,source='https://records.nhl.com/records/skater-records/'+url,evidence=dict(sample_size=len(games),games=games,benchmark=record,checked='2026-11-25')))
+                        out.append(dict(category='historical_record',text=f'{code}: {name} má za tým {total} {word}. Gretzkyho historické maximum: {record} za sezonu.',verified=True,source='https://records.nhl.com/records/skater-records/'+url,evidence=dict(sample_size=len(games),games=games,benchmark=record,reference_status='static benchmark; not live checked')))
                 if utc_datetime(g['start_utc'])<=now or not games: continue
                 # Only current roster, never infer a career total from team-only totals.
                 roster=load(f'/roster/{code}/current'); ids={x.get('id') for k in ('forwards','defensemen') for x in roster.get(k,[]) if isinstance(x,dict)}

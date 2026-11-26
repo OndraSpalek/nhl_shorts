@@ -9,6 +9,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+from shorts_quality import fits
 
 BASE = {'game_flow':83,'historical_record':96,'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
         'overall_form':75,'h2h':70,'special_teams':65,'period_goals':60,
@@ -53,27 +54,30 @@ def generated_candidates(game):
                 25, {'sample_size': 5, 'source': 'club-schedule-season'}))
     return out
 
-def verified_external(game, facts):
+def verified_external(game, facts, rejected=None):
     out=[]
+    if rejected is None: rejected=[]
     for f in facts:
+        def reject(reason):
+            rejected.append({"category":f.get("category"),"text":f.get("text"),"reason":reason})
         cat=f.get('category'); e=f.get('evidence') or {}
         if not f.get('verified') or not f.get('source') or cat not in BASE or cat in ('team_streak','venue_form','overall_form'):
-            continue
+            reject("unverified_or_unsupported"); continue
         text=f.get('text','').strip()
         text=re.sub(r'(?<=\d)\.(?=\d+\s*%)', ',', text)
         text=re.sub(r'\b([234]) gólů\b', r'\1 góly', text) if cat=='hat_trick' else text
         for old,new in [('Pastrnak','Pastrňák'),('Necas','Nečas'),('Chytil','Chytil'),('Zacha','Zacha'),('Hronek','Hronek'),('Gudas','Gudas'),('Kulich','Kulich'),('Slafkovsky','Slafkovský'),('Nemec','Nemec'),('Cernak','Černák'),('Fehervary','Fehérváry'),('Dvorsky','Dvorský'),('Mrazek','Mrázek'),('Vejmelka','Vejmelka'),('Dostal','Dostál'),('Kase','Kaše'),('Kampf','Kämpf'),('Rutta','Rutta'),('Palat','Palát'),('Klapka','Klapka'),('Kovacevic','Kovacevic')]:
             text=re.sub(r'\b'+old+r'\b',new,text)
-        if not text or len(text)>145: continue
+        if not text or len(text)>145: reject("empty_or_over_145_characters"); continue
         # No unsupported statistical claims; evidence must be auditable.
-        if not isinstance(e.get('sample_size'),int) or e['sample_size']<1: continue
-        if cat=='game_flow' and (e['sample_size']<5 or not 0<=e.get('wins',-1)<=e['sample_size']): continue
-        if cat=='h2h' and (e['sample_size']<5 or e.get('wins',0)<4): continue
-        if cat=='player_streak' and not (e.get('point_streak',0)>=7 or e.get('goal_streak',0)>=4): continue
-        if cat=='milestone' and not (0<e.get('remaining',999)<=2): continue
-        if cat in ('first_goal_comebacks','period_goals','special_teams','shots','faceoffs') and e['sample_size']<10: continue
-        if cat=='scoring' and e['sample_size']<10: continue
-        if cat=='rest' and not 0<e.get('hours',999)<=30: continue
+        if not isinstance(e.get('sample_size'),int) or e['sample_size']<1: reject("evidence_threshold"); continue
+        if cat=='game_flow' and (e['sample_size']<5 or not 0<=e.get('wins',-1)<=e['sample_size']): reject("evidence_threshold"); continue
+        if cat=='h2h' and (e['sample_size']<5 or e.get('wins',0)<4): reject("evidence_threshold"); continue
+        if cat=='player_streak' and not (e.get('point_streak',0)>=7 or e.get('goal_streak',0)>=4): reject("evidence_threshold"); continue
+        if cat=='milestone' and not (0<e.get('remaining',999)<=2): reject("evidence_threshold"); continue
+        if cat in ('first_goal_comebacks','period_goals','special_teams','shots','faceoffs') and e['sample_size']<10: reject("evidence_threshold"); continue
+        if cat=='scoring' and e['sample_size']<10: reject("evidence_threshold"); continue
+        if cat=='rest' and not 0<e.get('hours',999)<=30: reject("evidence_threshold"); continue
         bonus=min(15,max(0,int(f.get('bonus',0))))
         out.append(candidate(cat,text,BASE[cat]+bonus,e | {'source':f['source']}))
     return out
@@ -83,10 +87,11 @@ def rank(data, facts=None):
     ranked=[]
     used_categories={}
     for g in data.get('games',[]):
-        candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]))
+        rejected=[]
+        candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]),rejected)
         candidates.sort(key=lambda x:(x['category'] not in ('historical_record','game_flow','rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
-        first=candidates[0] if candidates else None
-        alternatives=[c for c in candidates[1:] if c['category']!=first['category'] and c['text']!=first['text']] if first else []
+        first=next((c for c in candidates if len(c["text"])<=135 and fits(c["text"],1)),None)
+        alternatives=[c for c in candidates if c['category']!=first['category'] and c['text']!=first['text'] and fits(c["text"],2)] if first else []
         second=max(alternatives,key=lambda c:c['score']-min(12,3*used_categories.get(c['category'],0)),default=None)
         if second: used_categories[second['category']]=used_categories.get(second['category'],0)+1
         bonus=0
@@ -95,7 +100,7 @@ def rank(data, facts=None):
         if isinstance(hr,int) and isinstance(ar,int) and 7<=hr<=10 and 7<=ar<=10: bonus+=10
         score=round((first['score'] if first else 0)+0.4*(second['score'] if second else 0)+min(bonus,20),1)
         ranked.append({**g,'interest_score':score,'featured_fact':first or candidate('form','Dnešní zápas NHL',0),
-                       'secondary_fact':second,'all_candidates':candidates})
+                       'secondary_fact':second,'all_candidates':candidates,'quality':{'rejected':rejected,'candidates':[{'category':c['category'],'text':c['text'],'fits_page1':len(c['text'])<=135 and fits(c['text'],1),'fits_page2':fits(c['text'],2),'status':'page1' if c is first else 'page2' if c is second else 'not_selected'} for c in candidates]}})
     # tie: strongest fact, then earliest start
     order=sorted(ranked,key=lambda g:(-g['interest_score'],-g['featured_fact']['score'],g['start_utc'],str(g['id'])))
     chosen=order[0]['id'] if order else None
