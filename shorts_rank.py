@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from shorts_quality import fits
 
-BASE = {'pregame':84,'game_flow':83,'historical_record':96,'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
+BASE = {'history_extended':88,'former_team':82,'pregame':84,'game_flow':83,'historical_record':96,'hat_trick':92,'shutout':88,'goalie':86,'player_leader':74,'historical_h2h':84,'rest':82,'scoring':76,'milestone':90,'player_streak':85,'team_streak':80,'venue_form':78,
         'overall_form':75,'h2h':70,'special_teams':65,'period_goals':60,
         'first_goal_comebacks':58,'shots':55,'faceoffs':45}
 
@@ -89,7 +89,7 @@ def rank(data, facts=None):
     for g in data.get('games',[]):
         rejected=[]
         candidates=generated_candidates(g)+verified_external(g,fact_games.get(str(g['id']),[]),rejected)
-        candidates.sort(key=lambda x:(x['category'] not in ('pregame','historical_record','game_flow','rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
+        candidates.sort(key=lambda x:(x['category'] not in ('history_extended','former_team','pregame','historical_record','game_flow','rest','scoring','h2h','first_goal_comebacks','period_goals','player_streak','milestone','goalie','player_leader','historical_h2h','hat_trick','shutout'),-x['score'],x['category'],x['text']))
         first=next((c for c in candidates if len(c["text"])<=135 and fits(c["text"],1)),None)
         alternatives=[c for c in candidates if c['category']!=first['category'] and c['text']!=first['text'] and fits(c["text"],2)] if first else []
         second=max(alternatives,key=lambda c:c['score']-min(12,3*used_categories.get(c['category'],0)),default=None)
