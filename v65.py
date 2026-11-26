@@ -79,10 +79,15 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     cards=out/'cards';cards.mkdir(exist_ok=True)
     slides=[]
+    from render_players import render_players
+    pages=3 if len(games)<=10 else 2
     for i,g in enumerate(games,1):
         g=dict(g,_game_of_day_id=data.get('game_of_day_id'),_demo=data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE')
         p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)
+        first=p
         p=cards/f'game_{i:02d}_advanced.png';render_advanced(g,p);slides.append(p)
+        if pages==3:
+            p=cards/f'game_{i:02d}_players.png';render_players(g,p,first);slides.append(p)
     shutil.copy2(slides[0],out/'nahled.png')
     if seconds_per_card <= 0: raise ValueError('Neplatná délka karty')
     frames_per_card=max(1,int(min(seconds_per_card,175/len(slides))*FPS))
@@ -93,7 +98,7 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
         encode(slides,ROOT,music,out/'be6player_shorts.mp4',frames_per_card)
     (out/'titulek.txt').write_text('NHL dnes | Be6player – zápasy a statistiky\n',encoding='utf-8')
     (out/'popis.txt').write_text(f"Přehled NHL pro {data.get('local_date','zvolené datum')}. Statistiky týmů a zápas dne. #NHL #Hokej #Be6player #NHLShorts\n",encoding='utf-8')
-    (out/'manifest.json').write_text(json.dumps({'games':len(games),'cards':len(slides),'seconds':duration,'fps':FPS,'animation':'V7.1 reveal and crossfade','audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
+    (out/'manifest.json').write_text(json.dumps({'games':len(games),'cards':len(slides),'pages_per_game':pages,'seconds':duration,'fps':FPS,'animation':'V7.1 reveal and crossfade','audio':'original instrumental only','voice':False,'youtube_upload':False,'missing_logos':missing,'data_source':data.get('note','external JSON'),'status':'demo' if data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE' else 'rendered', 'data_mode':data.get('data_mode','UNSPECIFIED')},ensure_ascii=False,indent=2),encoding='utf-8')
     return out/'be6player_shorts.mp4'
 
 if __name__=='__main__':

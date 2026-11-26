@@ -48,7 +48,7 @@ def enrich(data, fetch=get_json, now=None):
                         saves,shots=p['saves'],p['shotsAgainst']; toi=p['toi']; mm,ss=map(int,toi.split(':')); sec=mm*60+ss
                         if sec<=0: continue
                         if not (type(saves)==type(shots)==int and 0<=saves<=shots): raise ValueError()
-                        q=goalies.setdefault(p['playerId'],{'name':p['name']['default'],'games':[]}); q['games'].append({'id':r['id'],'saves':saves,'shots':shots,'seconds':sec,'starter':p.get('starter')})
+                        q=goalies.setdefault(p['playerId'],{'player_id':p['playerId'],'name':p['name']['default'],'games':[]}); q['games'].append({'id':r['id'],'saves':saves,'shots':shots,'seconds':sec,'starter':p.get('starter')})
                     except (KeyError,TypeError,ValueError): complete=False
                 appearances.append(r['id'])
             m['boxscore_sample']=len(appearances); m['schedule_sample']=len(rows)

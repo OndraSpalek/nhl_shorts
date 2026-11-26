@@ -36,7 +36,8 @@ def verify(outdir, require_live=False):
         if m.get('voice') is not False or m.get('youtube_upload') is not False:issues.append('Manifest požaduje hlas nebo publikaci')
         if require_live and m.get('missing_logos'):issues.append('Chybějící loga v produkčním výstupu')
         cards=list((root/'video'/'cards').glob('game_*.png'))
-        if len(cards)!=2*len(games):issues.append(f'Počet grafických karet {len(cards)} != {2*len(games)}')
+        expected=(3 if len(games)<=10 else 2)*len(games)
+        if len(cards)!=expected:issues.append(f'Počet grafických karet {len(cards)} != {expected}')
         if not video.exists() or video.stat().st_size<1000:issues.append('Video chybí nebo je prázdné')
         else:
             try:
@@ -46,7 +47,7 @@ def verify(outdir, require_live=False):
                 aud=[s for s in streams if s.get('codec_type')=='audio']
                 if len(vs)!=1 or vs[0].get('width')!=1080 or vs[0].get('height')!=1920:issues.append('Video není 1080×1920')
                 if len(aud)!=1:issues.append('Chybí jedna hudební zvuková stopa')
-                if float(media.get('format',{}).get('duration',0))<=0:issues.append('Neplatná délka videa')
+                if not 0<float(media.get('format',{}).get('duration',0))<=175.1:issues.append('Neplatná délka videa')
             except (OSError,subprocess.CalledProcessError,ValueError,KeyError) as exc:issues.append(f'ffprobe: {exc}')
         for name in ('nahled.png','titulek.txt','popis.txt'):
             if not (root/'video'/name).exists():issues.append(f'Chybí {name}')

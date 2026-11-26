@@ -65,6 +65,8 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
         for g in data['games']: g['match_metrics']=extra['metrics'].get(str(g['id']),{})
         data['data_endpoints'].extend(['/v1/club-schedule-season/{team}/{season}','/v1/gamecenter/{id}/landing'])
         extra=player_history(data)
+        from render_players import prepare
+        prepare(data,extra)
         for key, rows in extra['games'].items(): facts['games'].setdefault(key,[]).extend(rows)
         facts['warnings'].extend(extra['warnings'])
         facts['sources']['player_history']=extra['sources']
@@ -84,7 +86,7 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'quality.json').write_text(json.dumps({str(g['id']):g['quality'] for g in ranked['games']},ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'7.5.6','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'7.6','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}

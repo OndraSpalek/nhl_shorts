@@ -1,0 +1,5 @@
+V7.6 – instalace na V7.5.6 (ta musí být nahrána celá, včetně V7.5.5).
+Nahrajte všechny soubory tohoto ZIP kromě tohoto návodu do stejných cest v repozitáři.
+Nové: render_players.py, test_v76.py. Ostatní přepsat.
+Spusťte fixture, potom live. Fixture nemá hráčská data, ukazuje N/D.
+Třetí karta při 1–10 zápasech, jinak dvě. Brankář podle počtu utkání za tým, nikoli potvrzený startér.

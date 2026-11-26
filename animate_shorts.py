@@ -31,7 +31,13 @@ def encode(slides,root,music,out,frames_per_card):
     try:
         for i,path in enumerate(slides):
             with Image.open(path) as src: final=src.convert('RGB')
-            rr=regions(i%2);clean=final.copy();base=bases[i%2]
+            advanced=path.stem.endswith("_advanced")
+            player=path.stem.endswith("_players")
+            rr=regions(advanced) if not player else [(25,798+j*195,1055,950+j*195,.3+j*.25,.4) for j in range(4)]+[(40,1630,1040,1760,1.5,.4)]
+            clean=final.copy();base=bases[int(advanced)]
+            if player:
+                base=final.copy();d=ImageDraw.Draw(base)
+                for x,y,X,Y,_,_ in rr:d.rectangle((x,y,X,Y),fill="#091321")
             for x,y,X,Y,_,_ in rr: clean.paste(base.crop((x,y,X,Y)),(x,y))
             # Short slates compress the reveal to preserve at least two thirds for reading.
             speed=max(1,2.6/(frames_per_card/FPS/3))
