@@ -1,6 +1,8 @@
 """Approved V7.1 reveal, crossfade and entrance light sweep."""
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 import subprocess
+import math
+from shorts_highlight import pulse
 from pathlib import Path
 
 FPS=24
@@ -23,7 +25,7 @@ def frame(final,clean,rr,u,previous=None):
         im=ImageChops.add(im,glow.filter(ImageFilter.GaussianBlur(45)))
     return im
 
-def encode(slides,root,music,out,frames_per_card):
+def encode(slides,root,music,out,frames_per_card,highlights=None):
     bases=[Image.open(Path(root)/'assets'/name).convert('RGB') for name in ('arena_v692.png','arena_v701.png')]
     cmd=['ffmpeg','-y','-loglevel','error','-f','rawvideo','-pix_fmt','rgb24','-s','1080x1920','-r',str(FPS),'-i','-','-i',str(music),'-c:v','libx264','-preset','fast','-crf','20','-pix_fmt','yuv420p','-c:a','aac','-b:a','128k','-movflags','+faststart','-shortest',str(out)]
     p=subprocess.Popen(cmd,stdin=subprocess.PIPE)
@@ -42,9 +44,14 @@ def encode(slides,root,music,out,frames_per_card):
             # Short slates compress the reveal to preserve at least two thirds for reading.
             speed=max(1,2.6/(frames_per_card/FPS/3))
             final_bytes=final.tobytes()
+            items=(highlights or {}).get(path.name,[])
             for n in range(frames_per_card):
                 u=n/FPS*speed
-                p.stdin.write(final_bytes if u>=2.6 else frame(final,clean,rr,u,previous).tobytes())
+                elapsed=n/FPS-2.6/speed
+                if items and 0<=elapsed<1.2:
+                    p.stdin.write(pulse(final,items,math.sin(math.pi*elapsed/1.2)).tobytes())
+                else:
+                    p.stdin.write(final_bytes if u>=2.6 else frame(final,clean,rr,u,previous).tobytes())
             previous=final
         p.stdin.close()
         if p.wait(): raise RuntimeError('FFmpeg animation failed')
