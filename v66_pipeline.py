@@ -95,12 +95,15 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
             facts['warnings'].extend(block['warnings'])
             facts['sources'][label]=block['sources']
             (outdir/(label+'.json')).write_text(json.dumps(block,ensure_ascii=False,indent=2),encoding='utf-8')
+    from shorts_prediction import enrich as prediction
+    predictions=prediction(data) if fixture is None else {'status':'offline_fixture','games':{},'warnings':[]}
+    (outdir/'predictions.json').write_text(json.dumps(predictions,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'quality.json').write_text(json.dumps({str(g['id']):g['quality'] for g in ranked['games']},ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'7.9','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'8.0.5','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}
