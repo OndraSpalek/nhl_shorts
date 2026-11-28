@@ -1,5 +1,5 @@
-name: Be6player Shorts V8.0.5 - NHL video
-run-name: Be6player V8.0.5 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
+name: Be6player Shorts V8.0.6 - NHL video
+run-name: Be6player V8.0.6 | ${{ inputs.mode }} | ${{ inputs.date || 'Aktualni datum CR' }}
 on:
   schedule:
     - cron: "0 8 * * *"
@@ -10,6 +10,10 @@ on:
         description: Datum CR (YYYY-MM-DD), prazdne = dnes
         type: string
         default: ''
+      force_three_pages:
+        description: Test treti karty i pri vice nez 10 zapasech
+        type: boolean
+        default: false
       mode:
         description: live nebo offline test
         type: choice
@@ -77,8 +81,20 @@ jobs:
           for f in shorts_prediction.py shorts_historical.py shorts_availability.py shorts_pregame.py shorts_highlight.py shorts_quality.py shorts_game_flow.py shorts_milestones.py shorts_player_history.py animate_shorts.py assets/arena_v701.png render_advanced.py assets/arena_v692.png assets/arena_master.png examples/car_nyr.json examples/demo.json demo/offline_api_fixture.json shorts_match_facts.py; do test -f "$f" || { echo "Chybi $f"; exit 1; }; done
       - name: Testy
         run: python -m unittest discover -s . -p 'test_*.py' -v
+      - uses: actions/cache/restore@v4
+        with:
+          path: prediction_cache
+          key: prediction-v806-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: prediction-v806-
+      - name: Restore historical archive
+        run: |
+          if git fetch origin refs/heads/be6player-history; then
+            git archive FETCH_HEAD prediction_cache | tar -x
+          fi
       - name: Generovani a kontrola
         env:
+          FORCE_THREE: ${{ inputs.force_three_pages }}
+          NHL_PREDICTION_DETAIL_GAMES: '0'
           INPUT_DATE: ${{ inputs.date }}
           MODE: ${{ inputs.mode || 'live' }}
         run: |
@@ -92,23 +108,29 @@ jobs:
           else
             verify=(--require-live)
           fi
+          if [ "$FORCE_THREE" = true ]; then args+=(--force-three-pages); fi
           rm -rf shorts_preview
           python v66_pipeline.py --date "$DAY" --outdir shorts_preview --render "${args[@]}"
           python v67_verify.py --outdir shorts_preview "${verify[@]}"
           python v69_stamp.py "$DAY" "$MODE"
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: prediction_cache
+          key: prediction-v806-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Vysledky
         id: artifact
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: be6player-v805-${{ github.run_id }}-${{ github.run_attempt }}
+          name: be6player-v806-${{ github.run_id }}-${{ github.run_attempt }}
           path: shorts_preview/
           if-no-files-found: warn
           retention-days: 14
 
       - name: Samostatny e-mail Shorts
         continue-on-error: true
-        if: success() && (inputs.mode != 'fixture') && steps.artifact.outputs.artifact-id != ''
+        if: success() && (inputs.mode != 'fixture') && (inputs.force_three_pages != true) && steps.artifact.outputs.artifact-id != ''
         env:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

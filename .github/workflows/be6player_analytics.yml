@@ -1,9 +1,17 @@
-name: Be6player YouTube Analytics V8.1.0
+name: Be6player YouTube Analytics V8.1.1
 on:
   schedule:
     - cron: '30 12 * * *'
   workflow_dispatch:
     inputs:
+      video_id:
+        description: YouTube ID (volitelne)
+        type: string
+        default: ""
+      published_date:
+        description: Datum publikace YYYY-MM-DD
+        type: string
+        default: ""
       mode:
         type: choice
         options: [fixture, live]
@@ -34,12 +42,16 @@ jobs:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          VIDEO_ID: ${{ inputs.video_id }}
+          PUBLISHED_DATE: ${{ inputs.published_date }}
           MODE: ${{ inputs.mode || 'live' }}
         run: |
           if [ "$MODE" = fixture ]; then
             python shorts_youtube.py --fixture --out analytics_fixture
           else
-            python shorts_youtube.py
+            args=()
+            if [ -n "$VIDEO_ID" ]; then args=(--video-id "$VIDEO_ID" --published-date "$PUBLISHED_DATE"); fi
+            python shorts_youtube.py "${args[@]}"
           fi
       - uses: actions/cache/save@v4
         if: always() && inputs.mode != 'fixture'

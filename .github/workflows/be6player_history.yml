@@ -1,0 +1,37 @@
+name: Be6player V8.0.6 REV2 - historical archive
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 2 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: be6player-history
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - name: Restore persistent archive
+        run: |
+          test "${{ github.event.repository.private }}" = true || { echo 'Private repository required'; exit 1; }
+          if git fetch origin refs/heads/be6player-history; then
+            git archive FETCH_HEAD prediction_cache | tar -x
+          fi
+      - run: python shorts_history_store.py
+      - name: Save archive to separate branch
+        run: |
+          git config user.name be6player-history
+          git config user.email be6player-history@users.noreply.github.com
+          export GIT_INDEX_FILE=$(mktemp -u)
+          git read-tree --empty
+          git add -f prediction_cache
+          tree=$(git write-tree)
+          commit=$(echo 'Historical NHL archive snapshot' | git commit-tree "$tree")
+          git push --force origin "$commit:refs/heads/be6player-history"
