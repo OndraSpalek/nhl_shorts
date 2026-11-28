@@ -82,7 +82,7 @@ def build(data,out,strict_logos=True,seconds_per_card=4):
     highlights={}
     from shorts_highlight import plan
     from render_players import render_players
-    pages=3 if len(games)<=10 else 2
+    pages=3 if len(games)<=10 or data.get('force_three_pages') else 2
     for i,g in enumerate(games,1):
         g=dict(g,_game_of_day_id=data.get('game_of_day_id'),_demo=data.get('data_mode')=='OFFLINE_FIXTURE_NOT_LIVE')
         p=cards/f'game_{i:02d}.png';render(mapped(g),p);slides.append(p)

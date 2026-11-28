@@ -34,16 +34,24 @@ def collect(api,registry,db,today):
     return errors
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--registry',default='youtube_registry.json');p.add_argument('--out',default='analytics_data');p.add_argument('--fixture',action='store_true');a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--registry',default='youtube_registry.json');p.add_argument('--out',default='analytics_data');p.add_argument('--fixture',action='store_true');p.add_argument('--video-id');p.add_argument('--published-date');a=p.parse_args()
     registry=json.loads(Path(a.registry).read_text());out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
     if a.fixture:
         from test_youtube import FakeAPI
         api=FakeAPI();registry=[{'video_id':'abcdefghijk','published_date':'2026-01-01'}]
-    else:api=API() if registry else None
+    else:
+        if a.video_id:
+            if not a.published_date: p.error('--published-date required')
+            registry=[x for x in registry if x['video_id']!=a.video_id]+[{'video_id':a.video_id,'published_date':a.published_date}]
+        saved=out/'registered_videos.json'
+        previous=json.loads(saved.read_text()) if saved.exists() else []
+        registry=list({x['video_id']:x for x in previous+registry}.values())
+        saved.write_text(json.dumps(registry,indent=2))
+        api=API() if registry else None
     with sqlite3.connect(out/'analytics.db') as db:
         errors=collect(api,registry,db,dt.datetime.now(UTC).date())
         records=db.execute('SELECT * FROM snapshots ORDER BY day,video_id,kind').fetchall()
     (out/'snapshots.json').write_text(json.dumps([dict(zip(('video_id','day','kind','payload'),(v,d,k,json.loads(s)))) for v,d,k,s in records],ensure_ascii=False,indent=2))
-    (out/'status.json').write_text(json.dumps({'mode':'fixture' if a.fixture else 'live','registered':len(registry),'snapshots':len(records),'errors':errors},indent=2))
+    (out/'status.json').write_text(json.dumps({'mode':'fixture' if a.fixture else 'live','registered':len(registry),'status':'no_registered_videos' if not registry else 'errors' if errors else 'collected','snapshots':len(records),'errors':errors},indent=2))
     if errors:raise SystemExit(1)
 if __name__=='__main__':main()

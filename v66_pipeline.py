@@ -51,12 +51,13 @@ def validate(data):
     return True
 
 
-def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_demo_logos=False, seconds=8):
+def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_demo_logos=False, seconds=8, force_three_pages=False):
     outdir=Path(outdir);outdir.mkdir(parents=True,exist_ok=True)
     fixture=json.loads(Path(fixture_path).read_text(encoding='utf-8')) if fixture_path else None
     data=build(day,fixture=fixture)
     validate(data)
     data['data_mode']='OFFLINE_FIXTURE_NOT_LIVE' if fixture is not None else 'NHL_API'
+    data['force_three_pages']=force_three_pages
     data['generated_utc']=datetime.now(timezone.utc).isoformat()
     data['data_endpoints']=['/v1/schedule/{date}','/v1/standings/{date}','/v1/club-schedule-season/{team}/now'] if fixture is None else []
     facts=enrich(data) if fixture is None else {'games':{},'warnings':['Offline demo: bez živých statistik'],'sources':{}}
@@ -101,9 +102,10 @@ def execute(day, outdir, fixture_path=None, csv_dir=None, render=False, allow_de
     (outdir/'data.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'facts.json').write_text(json.dumps(facts,ensure_ascii=False,indent=2),encoding='utf-8')
     ranked=rank(data,facts)
+    ranked['force_three_pages']=force_three_pages
     (outdir/'ranked.json').write_text(json.dumps(ranked,ensure_ascii=False,indent=2),encoding='utf-8')
     (outdir/'quality.json').write_text(json.dumps({str(g['id']):g['quality'] for g in ranked['games']},ensure_ascii=False,indent=2),encoding='utf-8')
-    audit={'version':'8.0.5','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
+    audit={'version':'8.0.6','date':day,'mode':data['data_mode'],'game_count':len(data['games']),
            'game_of_day_id':ranked['game_of_day_id'],'csv_warnings':facts['warnings'],
            'metrics':{},'source':data['data_endpoints'],'voice':False,'youtube_upload':False,
            'note':'Pokročilé týmové statistiky vyžadují ověřené zdroje; chybějící hodnoty se nedopočítávají odhadem.'}
@@ -123,6 +125,7 @@ if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--date',required=True);p.add_argument('--outdir',required=True)
     p.add_argument('--fixture');p.add_argument('--csv-dir');p.add_argument('--render',action='store_true')
     p.add_argument('--allow-demo-logos',action='store_true');p.add_argument('--seconds',type=float,default=8)
+    p.add_argument('--force-three-pages',action='store_true')
     a=p.parse_args()
     if a.allow_demo_logos and not a.fixture: p.error('--allow-demo-logos je povoleno pouze s --fixture')
-    print(json.dumps(execute(a.date,a.outdir,a.fixture,a.csv_dir,a.render,a.allow_demo_logos,a.seconds),ensure_ascii=False,indent=2))
+    print(json.dumps(execute(a.date,a.outdir,a.fixture,a.csv_dir,a.render,a.allow_demo_logos,a.seconds,a.force_three_pages),ensure_ascii=False,indent=2))

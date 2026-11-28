@@ -10,7 +10,7 @@ def select(metrics,ids):
     return [max(p,key=lambda q:q['points'],default=None),max(p,key=lambda q:q['goals'],default=None),max((q for q in p if len(q['games'])>=5),key=lambda q:q['last5_points'],default=None),max(gs,key=lambda q:q['gp'],default=None)]
 
 def prepare(data,history,fetch=get_json):
-    if len(data['games'])>10:return
+    if len(data['games'])>10 and not data.get('force_three_pages'):return
     for g in data['games']:
         g['player_cards']={}
         if utc_datetime(g['start_utc'])<=datetime.now(timezone.utc):continue

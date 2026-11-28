@@ -30,11 +30,11 @@ def parse_pbp(row,payload,code):
 
 def reconcile(row,events,code):
     events.sort(key=lambda e: (e[0], e[1])); win=row['gf']>row['ga']; so=row['shootout']
-    if not events or sum(t==code for _,_,t in events)!=row['gf']-int(so and win) or sum(t!=code for _,_,t in events)!=row['ga']-int(so and not win): raise ValueError('score mismatch')
+    if (not events and not so) or sum(t==code for _,_,t in events)!=row['gf']-int(so and win) or sum(t!=code for _,_,t in events)!=row['ga']-int(so and not win): raise ValueError('score mismatch')
     diff=0; led=False; trailed=False
     for _,_,t in events:
         diff+=1 if t==code else -1; led |= diff>0; trailed |= diff<0
-    return dict(row,win=win,led=led,trailed=trailed,first_against=events[0][2]!=code,after1=sum(1 if t==code else -1 for n,_,t in events if n<=1),after2=sum(1 if t==code else -1 for n,_,t in events if n<=2),events=events)
+    return dict(row,win=win,led=led,trailed=trailed,first_against=bool(events) and events[0][2]!=code,after1=sum(1 if t==code else -1 for n,_,t in events if n<=1),after2=sum(1 if t==code else -1 for n,_,t in events if n<=2),events=events)
 
 def enrich(data, fetch=get_json, now=None):
     now=now or datetime.now(timezone.utc); cache={}; result={'games':{},'metrics':{},'warnings':[],'sources':[],'diagnostics':{},'fallback_recovered':[]}

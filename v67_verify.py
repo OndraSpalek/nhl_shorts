@@ -36,7 +36,7 @@ def verify(outdir, require_live=False):
         if m.get('voice') is not False or m.get('youtube_upload') is not False:issues.append('Manifest požaduje hlas nebo publikaci')
         if require_live and m.get('missing_logos'):issues.append('Chybějící loga v produkčním výstupu')
         cards=list((root/'video'/'cards').glob('game_*.png'))
-        expected=(3 if len(games)<=10 else 2)*len(games)
+        expected=(3 if len(games)<=10 or data.get('force_three_pages') else 2)*len(games)
         if len(cards)!=expected:issues.append(f'Počet grafických karet {len(cards)} != {expected}')
         if not video.exists() or video.stat().st_size<1000:issues.append('Video chybí nebo je prázdné')
         else:
